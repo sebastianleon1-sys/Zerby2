@@ -2,23 +2,39 @@ from flask import Flask, request, jsonify, render_template, session, redirect, u
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
+from dotenv import load_dotenv
 from datetime import datetime, timezone
 from flask import Flask, request, jsonify, render_template, session, redirect, url_for, abort
+from flask_socketio import SocketIO, emit, join_room, leave_room #para chat en tiempo real
+
+load_dotenv()
 
 app = Flask(__name__)
-basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
+
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL or not DATABASE_URL.startswith("postgresql://"):
+    raise RuntimeError("DATABASE_URL no está configurada o invalida. Debe apuntar a Neon.")
+
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'mi-clave-secreta-12345' 
+app.config['SECRET_KEY'] = os.getenv("SECRET_KEY")
+app.config.setdefault("SQLALCHEMY_ENGINE_OPTIONS", {"pool_pre_ping": True}) 
 
 db = SQLAlchemy(app)
+
+socketio = SocketIO(
+    app,
+    cors_allowed_origins="*",
+    logger=True,
+    engineio_logger=True
+)
 
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_completo = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     telefono = db.Column(db.String(15))
 
     def set_password(self, password):
@@ -31,7 +47,7 @@ class Proveedor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre_completo = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.Text, nullable=False)
     telefono = db.Column(db.String(15), nullable=False)
     oficio = db.Column(db.String(50), nullable=False) 
     descripcion = db.Column(db.Text)
@@ -381,19 +397,21 @@ def api_get_detalles_conv(conv_id):
 
 @app.route('/api/conversacion/<int:conv_id>/enviar', methods=['POST'])
 def api_enviar_mensaje(conv_id):
-    if 'user_id' not in session: return jsonify({"error": "No autorizado"}), 401
+    if 'user_id' not in session:
+        return jsonify({"error": "No autorizado"}), 401
     
     conv = Conversacion.query.get_or_404(conv_id)
     user_id = session['user_id']
     user_type = session['user_type']
     datos = request.json
 
-    # Seguridad
-    if (user_type == 'usuario' and conv.usuario_id != user_id) or \
-       (user_type == 'proveedor' and conv.proveedor_id != user_id):
+    autorizado = (user_type == 'usuario' and conv.usuario_id == user_id) or \
+                 (user_type == 'proveedor' and conv.proveedor_id == user_id)
+    if not autorizado:
         return jsonify({"error": "No autorizado"}), 403
     
-    if 'contenido' not in datos or not datos['contenido']:
+    contenido = datos.get('contenido', '').strip()
+    if not contenido:
         return jsonify({"error": "Mensaje vacío"}), 400
 
     try:
@@ -401,16 +419,63 @@ def api_enviar_mensaje(conv_id):
             conversacion_id=conv_id,
             remitente_id=user_id,
             remitente_tipo=user_type,
-            contenido=datos['contenido']
+            contenido=contenido
         )
         db.session.add(nuevo_mensaje)
         db.session.commit()
+
+        # 👇 EMITIR MENSAJE A LA SALA
+        payload = {
+            "contenido": nuevo_mensaje.contenido,
+            "remitente_tipo": nuevo_mensaje.remitente_tipo,
+            "timestamp": nuevo_mensaje.timestamp.strftime("%d/%m %H:%M")
+        }
+        room = f"chat_{conv_id}"
+        print(f"[EMIT] room={room} payload={payload}")
+        socketio.emit("receive_message", payload, room=room)
+
         return jsonify({"mensaje": "Enviado"}), 201
+
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-    app.run(debug=True)
+
+@socketio.on("join")
+def handle_join(data):
+    conv_id = data.get("conv_id")
+    if not conv_id:
+        return emit("error", {"message": "conv_id requerido"})
+
+    if 'user_id' not in session:
+        return emit("error", {"message": "No autorizado"})
+
+    conv = Conversacion.query.get(conv_id)
+    if not conv:
+        return emit("error", {"message": "Conversación no existe"})
+
+    user_id = session['user_id']
+    user_type = session['user_type']
+    autorizado = (user_type == 'usuario' and conv.usuario_id == user_id) or \
+                 (user_type == 'proveedor' and conv.proveedor_id == user_id)
+    if not autorizado:
+        return emit("error", {"message": "No autorizado"})
+
+    room = f"chat_{conv_id}"
+    join_room(room)
+    print(f"[JOIN] user={user_id} tipo={user_type} -> room={room}")
+    emit("joined", {"conv_id": conv_id})
+
+
+
+@socketio.on("connect")
+def on_connect():
+    print("Usuario conectado al socket:", request.sid)
+
+@socketio.on("disconnect")
+def on_disconnect():
+    print("Usuario desconectado del socket:", request.sid)
+
+if __name__ == "__main__":
+    # con gevent, socketio.run funciona perfecto
+    socketio.run(app, host="127.0.0.1", port=5000, debug=True, use_reloader=False)
