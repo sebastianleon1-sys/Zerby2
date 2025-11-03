@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: grid; place-items: center; min-height: 90vh; }
+        form { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 300px; padding: 8px; }
+        p { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <form id="form-login">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='logo_zerby.png') }}" alt="Zerby Logo" height="70">
+        </div>
+
+        <h2>Iniciar Sesión</h2>
+        <p style="text-align: center;"><a href="/">&larr; Volver al inicio</a></p>
+        <div id="error-msg" style="color: red; display: none;"></div>
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type"submit">Entrar</button>
+        
+        <p>¿No tienes cuenta? <br>
+            <a href="/registro/usuario">Regístrate como cliente</a> | 
+            <a href="/registro/proveedor">Regístrate como proveedor</a>
+        </p>
+    </form>
+
+<script>
+    document.getElementById('form-login').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const datos = Object.fromEntries(formData.entries());
+        const errorDiv = document.getElementById('error-msg');
+
+        const response = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+
+        const resultado = await response.json();
+
+        if (response.ok) {
+            window.location.href = '/dashboard';
+        } else {
+            errorDiv.textContent = resultado.mensaje;
+            errorDiv.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

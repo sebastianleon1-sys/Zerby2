@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Buscar Servicios</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        nav h1 { font-size: 20px; }
+        nav h1 span { font-weight: normal; }
+        
+        .search-container {
+            margin: 20px 0; display: flex; gap: 10px;
+        }
+        .search-container input {
+            flex-grow: 1; padding: 12px; font-size: 16px;
+        }
+        .search-container button {
+            padding: 12px 20px; font-size: 16px; background: #007bff; color: white; border: none; cursor: pointer;
+        }
+
+        .results-container h2 {
+            border-bottom: 2px solid #eee; padding-bottom: 10px;
+        }
+        .provider-card {
+            background: white; border: 1px solid #ddd;
+            padding: 15px; margin-bottom: 10px; border-radius: 8px;
+        }
+        .provider-card h3 {
+            margin: 0 0 5px 0; color: #007bff;
+        }
+        .provider-card .proveedor-nombre {
+            font-weight: bold; background: #eee; padding: 3px 6px; border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+        .provider-card p {
+            margin: 10px 0 0 0;
+        }
+        .provider-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .provider-card .badge-urgente {
+            background: #dc3545;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+        
+    .chat-button {
+        background: #28a745; 
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        float: right; 
+        margin-top: -10px; 
+    }
+    .chat-button:hover {
+        background: #218838;
+    }
+    </style>
+</head>
+<body>
+
+    <nav>
+    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
+    <div>
+        <a href="/bandeja_entrada" style="margin-right: 15px;">Mis Mensajes</a>
+        <a href="/api/logout">Cerrar Sesión</a>
+    </div>
+</nav>
+    <hr>
+
+    <section class="search-container">
+        <form id="form-busqueda" style="display: contents;">
+    <input type="search" id="search-query" 
+           placeholder="¿Qué servicio necesitas? (ej: electricista)" 
+           style="flex-grow: 2;"> <select id="comuna-filter" style="flex-grow: 1; padding: 12px; font-size: 16px;">
+        <option value="todas">Todas las Comunas</option>
+        <option value="Santiago">Santiago</option>
+        <option value="Providencia">Providencia</option>
+        <option value="Las Condes">Las Condes</option>
+        <option value="La Florida">La Florida</option>
+        <option value="Maipú">Maipú</option>
+        <option value="Ñuñoa">Ñuñoa</option>
+        <option value="Puente Alto">Puente Alto</option>
+        <option value="San Miguel">San Miguel</option>
+        <option value="Vitacura">Vitacura</option>
+        <option value="Lo Barnechea">Lo Barnechea</option>
+        </select>
+    
+    <button type="submit">Buscar</button>
+</form>
+    </section>
+
+    <section class="results-container">
+        <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
+        <div id="results-list">
+            </div>
+    </section>
+
+<script>
+    function mostrarProveedores(proveedores) {
+        const resultsList = document.getElementById('results-list');
+        resultsList.innerHTML = ''; 
+
+        if (proveedores.length === 0) {
+            resultsList.innerHTML = '<p>No se encontraron proveedores para tu búsqueda.</p>';
+            return;
+        }
+
+        proveedores.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'provider-card';
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3>${p.oficio}</h3>
+                    ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
+                </div>
+                <span class="proveedor-nombre">Profesional: ${p.nombre}</span>
+                <p>${p.descripcion || 'Sin descripción.'}</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                <p><strong>📍 Comuna:</strong> ${p.comuna || 'No especificada'}</p>
+                <p><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
+                <p><strong>📞 Contacto:</strong> ${p.telefono}</p>
+                <button class="chat-button" onclick="iniciarChat(${p.proveedor_id})">
+                    Contactar
+                </button>
+            `;
+            resultsList.appendChild(card);
+        });
+    }
+
+    window.addEventListener('load', async function() {
+        
+        try {
+            const responseProfile = await fetch('/api/get_profile');
+            if (!responseProfile.ok) throw new Error('No autorizado');
+            const datos = await responseProfile.json();
+            document.querySelector('#welcome-msg span').textContent = datos.nombre;
+        } catch (e) {
+            window.location.href = '/login'; 
+        }
+
+        try {
+            const responseCercanos = await fetch('/api/proveedores/cercanos');
+            const proveedores = await responseCercanos.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error al cargar proveedores cercanos:", e);
+        }
+    });
+
+    document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+
+        const query = document.getElementById('search-query').value;
+        const comuna = document.getElementById('comuna-filter').value;
+        const resultsTitle = document.getElementById('results-title');
+
+        if (!query && comuna === 'todas') {
+            resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
+            try {
+                const response = await fetch('/api/proveedores/cercanos');
+                const proveedores = await response.json();
+                mostrarProveedores(proveedores);
+            } catch (e) {
+                console.error("Error al cargar proveedores cercanos:", e);
+            }
+            return; 
+        }
+        
+        let titulo = 'Resultados de Búsqueda';
+        if (query) titulo = `Resultados para "${query}"`;
+        if (comuna !== 'todas') titulo += ` en ${comuna}`;
+        resultsTitle.textContent = titulo;
+        
+        try {
+            const response = await fetch(`/api/buscar?q=${query}&comuna=${comuna}`);
+            const proveedores = await response.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error en la búsqueda:", e);
+        }
+    });
+    async function iniciarChat(proveedorId) {
+    try {
+        const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al iniciar el chat');
+        }
+
+        const data = await response.json();
+
+        window.location.href = '/conversacion/' + data.conversacion_id;
+
+    } catch (error) {
+        console.error(error);
+        alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
+    }
+}
+</script>
+
+</body>
+</html>

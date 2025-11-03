@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Mi Perfil de Proveedor</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <nav>
+    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
+    <div>
+        <a href="/bandeja_entrada" style="margin-right: 15px;">Bandeja de Entrada</a>
+        <a href="/api/logout">Cerrar Sesión</a>
+    </div>
+</nav>
+    <hr>
+    
+    <h2>Tu Panel de Proveedor</h2>
+    <p>Aquí podrás ver tus solicitudes de servicio, editar tu perfil y gestionar tu disponibilidad.</p>
+    
+    <h3>Tus datos actuales:</h3>
+    <p><strong>Email:</strong> <span id="email-span"></span></p>
+    <p><strong>Tipo de cuenta:</strong> <span id="tipo-span"></span></sppa>
+    <p><strong>Oficio:</strong> <span id="oficio-span"></span></sppa>
+
+<script>
+    window.addEventListener('load', async function() {
+        const response = await fetch('/api/get_profile');
+        
+        if (!response.ok) {
+            window.location.href = '/login';
+            return;
+        }
+        
+        const datos = await response.json();
+        document.querySelector('#welcome-msg span').textContent = datos.nombre;
+        document.getElementById('email-span').textContent = datos.email;
+        document.getElementById('tipo-span').textContent = datos.tipo;
+    });
+</script>
+
+</body>
+</html>

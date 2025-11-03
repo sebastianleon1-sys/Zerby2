@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
+        .chat-container {
+            max-width: 800px; margin: 20px auto;
+            border: 1px solid #ccc;
+            background: white;
+            display: flex; flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+        .chat-header {
+            padding: 15px 20px;
+            background: #007bff; color: white;
+            border-bottom: 1px solid #ccc;
+        }
+        .chat-header h2 { margin: 0; }
+        .chat-header a { color: white; }
+        .chat-box {
+            flex-grow: 1; padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+        .mensaje {
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .mensaje.recibido {
+            background: #eee;
+            align-self: flex-start;
+        }
+        .mensaje.enviado {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto; /* Alinea a la derecha */
+        }
+        .mensaje .timestamp {
+            font-size: 11px;
+            color: #777;
+            display: block;
+            margin-top: 4px;
+        }
+        .mensaje.enviado .timestamp { color: #f1f1f1; }
+        
+        .chat-form {
+            display: flex; padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+        .chat-form input {
+            flex-grow: 1; padding: 12px;
+            border: 1px solid #ccc; border-radius: 20px;
+        }
+        .chat-form button {
+            padding: 12px 20px; margin-left: 10px;
+            background: #007bff; color: white;
+            border: none; border-radius: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+            <a href="/bandeja_entrada" style="float:left; margin-right: 15px;">&larr; Volver</a>
+            <h2 id="chat-with-name">Cargando...</h2>
+        </div>
+        
+        <div class="chat-box" id="chat-box">
+            </div>
+
+        <form class="chat-form" id="form-enviar">
+            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+<script>
+    // Flask nos pasa estas variables desde el backend
+    const CONV_ID = {{ conv_id|tojson }};
+    const USER_TIPO_ACTUAL = {{ user_tipo_actual|tojson }};
+
+    const chatBox = document.getElementById('chat-box');
+    const chatName = document.getElementById('chat-with-name');
+    const form = document.getElementById('form-enviar');
+    const inputMsg = document.getElementById('input-mensaje');
+
+    // Función para cargar todos los mensajes
+    async function cargarMensajes() {
+        try {
+            const response = await fetch(`/api/conversacion/${CONV_ID}/detalles`);
+            const data = await response.json();
+
+            chatName.textContent = `Chat con ${data.otro_nombre}`;
+            chatBox.innerHTML = ''; // Limpiar
+
+            data.mensajes.forEach(msg => {
+                const msgDiv = document.createElement('div');
+                msgDiv.classList.add('mensaje');
+                
+                // Decide si es "enviado" o "recibido"
+                if (msg.remitente_tipo === USER_TIPO_ACTUAL) {
+                    msgDiv.classList.add('enviado');
+                } else {
+                    msgDiv.classList.add('recibido');
+                }
+                
+                msgDiv.innerHTML = `${msg.contenido} <span class="timestamp">${msg.timestamp}</span>`;
+                chatBox.appendChild(msgDiv);
+            });
+
+            // Mover el scroll al final
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+        } catch (error) {
+            console.error(error);
+            chatBox.innerHTML = '<p>Error al cargar el chat.</p>';
+        }
+    }
+
+    // Función para enviar un mensaje
+    async function enviarMensaje(e) {
+        e.preventDefault();
+        const contenido = inputMsg.value;
+        if (contenido.trim() === '') return;
+
+        try {
+            const response = await fetch(`/api/conversacion/${CONV_ID}/enviar`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contenido: contenido })
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al enviar');
+            }
+            
+            inputMsg.value = ''; // Limpiar input
+            cargarMensajes(); // Recargar el chat
+
+        } catch (error) {
+            console.error(error);
+            alert('No se pudo enviar el mensaje.');
+        }
+    }
+
+    // Cargar todo al iniciar
+    window.addEventListener('load', cargarMensajes);
+    form.addEventListener('submit', enviarMensaje);
+
+</script>
+</body>
+</html>

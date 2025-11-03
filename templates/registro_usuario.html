@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro de Cliente</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: grid; place-items: center; min-height: 90vh; }
+        form { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 300px; padding: 8px; }
+        p { text-align: center; }
+    </style>
+</head>
+<body>
+
+    <form id="form-usuario">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='logo_zerby.png') }}" alt="Zerby Logo" height="70">
+        </div>
+        <h2>Soy Cliente (Busco un servicio)</h2>
+        <p style="text-align: center;"><a href="/">&larr; Volver al inicio</a></p>
+        <div>
+            <label>Nombre Completo:</label>
+            <input type="text" name="nombre_completo" required>
+        </div>
+        <div>
+            <label>Email:</label>
+            <input type="email" name="email" required>
+        </div>
+        <div>
+            <label>Contraseña:</label>
+            <input type="password" name="password" required>
+        </div>
+        <div>
+            <label>Teléfono (Opcional):</label>
+            <input type="tel" name="telefono">
+        </div>
+        
+        <button type="submit">Registrarme como Cliente</button>
+        <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
+        <p>¿Ofreces un servicio? <a href="/registro/proveedor">Regístrate como proveedor</a></p>
+    </form>
+
+<script>
+    document.getElementById('form-usuario').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const datos = Object.fromEntries(formData.entries());
+
+        const response = await fetch('/registrar/usuario', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(datos)
+        });
+        
+        const resultado = await response.json();
+
+        if (response.ok) {
+            alert(resultado.mensaje);
+            window.location.href = '/dashboard'; 
+        } else {
+            alert(resultado.mensaje);
+        }
+    });
+</script>
+
+</body>
+</html>
