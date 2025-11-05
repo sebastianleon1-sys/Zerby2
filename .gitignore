@@ -27,3 +27,6 @@ __pycache__/
 build/
 dist/
 *.egg-info/
+
+#env trae la conexion a la base de datos
+.env    
