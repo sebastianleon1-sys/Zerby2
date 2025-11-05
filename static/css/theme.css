@@ -162,7 +162,7 @@ button[type="submit"]{ height:44px; border-radius:12px; font-weight:800 }
    Usa: <body class="auth-page"> en esas vistas
    =================================== */
 .auth-page{
-  background: linear-gradient(180deg,#f6f8fc, #eef2ff 60%, #f6f8fc);
+  background: linear-gradient(180deg,#ffffff, #ffffff 60%, #ffffff);
 }
 .auth-page .auth-wrap{
   max-width:720px; margin:24px auto; padding:0 12px;

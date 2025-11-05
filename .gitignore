@@ -12,8 +12,8 @@ __pycache__/
 *.db
 
 # Entorno / variables privadas
-.env
-.env.*
+#.env
+#.env.*
 
 # Archivos temporales
 *.log

@@ -63,6 +63,75 @@
             border: none; border-radius: 20px;
             cursor: pointer;
         }
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Para móviles */
+        }
+
+        .rating-widget { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: white;
+            padding-top: 5px;
+        }
+        .rating-widget .stars { display: flex; }
+        .rating-widget .stars span {
+            font-size: 1.5rem; /* Tamaño de la estrella */
+            cursor: pointer;
+            opacity: 0.3; /* Opacidad inicial */
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        /* Al pasar el mouse sobre CUALQUIER estrella */
+        .rating-widget .stars:hover span {
+            opacity: 0.5;
+        }
+
+        /* Al pasar el mouse, iluminamos esa y las anteriores */
+        .rating-widget .stars span:hover,
+        .rating-widget .stars span:hover ~ span {
+            opacity: 0.3; /* Reseteamos las que están "después" */
+        }
+        .rating-widget .stars:hover span:hover,
+        .rating-widget .stars:hover span:hover ~ span {
+            opacity: 0.3;
+        }
+        /* Complicado selector para iluminar las estrellas PREVIAS al hover */
+        .rating-widget .stars:hover span:nth-child(1):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(2):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(3):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(4):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(5):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(6):hover ~ span { opacity: 0.3; }
+
+        .rating-widget .stars:hover span:nth-child(1):hover { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(2):hover, .rating-widget .stars:hover span:nth-child(2):hover ~ span:nth-child(-n+1) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(3):hover, .rating-widget .stars:hover span:nth-child(3):hover ~ span:nth-child(-n+2) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(4):hover, .rating-widget .stars:hover span:nth-child(4):hover ~ span:nth-child(-n+3) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(5):hover, .rating-widget .stars:hover span:nth-child(5):hover ~ span:nth-child(-n+4) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(6):hover, .rating-widget .stars:hover span:nth-child(6):hover ~ span:nth-child(-n+5) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(7):hover, .rating-widget .stars:hover span:nth-child(7):hover ~ span:nth-child(-n+6) { opacity: 1; transform: scale(1.2); }
+
+        /* Estilo para cuando ya se votó */
+        .rating-widget .stars.rated span { opacity: 0.3; }
+        .rating-widget .stars.rated span.active { opacity: 1; }
+    
+        .chat-header {
+            /* ... (tus estilos existentes) ... */
+            gap: 15px; /* Añade espacio */
+        }
+        .chat-header > div:first-child {
+            flex-grow: 1; /* Permite que el nombre y "volver" crezca */
+        }
+        .rating-widget {
+            /* ... (tus estilos existentes) ... */
+            flex-basis: 300px; /* Ancho base para el widget */
+            flex-wrap: wrap; /* Para que el input baje si no cabe */
+        }
+
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
@@ -80,8 +149,26 @@
 
     <div class="chat-container">
         <div class="chat-header">
+        <div>
             <a href="/bandeja_entrada" style="float:left; margin-right: 15px;">&larr; Volver</a>
             <h2 id="chat-with-name">Cargando...</h2>
+        </div>
+
+        {% if user_tipo_actual == 'usuario' %}
+        <div class="rating-widget">
+            <span>Calificar (1-7):</span>
+            <div class="stars" id="stars-widget">
+                <span data-value="1">⭐</span>
+                <span data-value="2">⭐</span>
+                <span data-value="3">⭐</span>
+                <span data-value="4">⭐</span>
+                <span data-value="5">⭐</span>
+                <span data-value="6">⭐</span>
+                <span data-value="7">⭐</span>
+            </div>
+            <input type="text" id="rating-comment" placeholder="Deja un comentario (opcional)" style="width: 100%; margin-top: 5px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 12px; color: #333;">
+        </div>
+        {% endif %}
         </div>
         
         <div class="chat-box" id="chat-box">
@@ -129,6 +216,9 @@
         data.mensajes.forEach(msg => addMessage(msg.contenido, msg.remitente_tipo, msg.timestamp));
         
         chatBox.scrollTop = chatBox.scrollHeight;
+        if (data.proveedor_id) {
+        setupRatingWidget(data.proveedor_id);
+        }
     }
 
     function addMessage(text, remitente_tipo, ts=null) {
@@ -148,6 +238,53 @@
     socket.on("receive_message", data => {
         addMessage(data.contenido, data.remitente_tipo, data.timestamp);
     });
+    // ... (después de la función addMessage, por ejemplo)
+
+function setupRatingWidget(proveedorId) {
+    const starsContainer = document.getElementById("stars-widget");
+    // Si el widget no existe (porque es un proveedor), no hacemos nada
+    if (!starsContainer) return; 
+
+    const stars = starsContainer.querySelectorAll("span");
+
+    // Función que envía la calificación a la API
+    const sendRating = async (puntuacion) => {
+        const commentInput = document.getElementById("rating-comment");
+        const comentario = commentInput.value.trim();
+        try {
+            const response = await fetch(`/api/calificar/${proveedorId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ puntuacion: puntuacion, comentario: comentario })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log(data.mensaje + ":", puntuacion, comentario);
+                // Marcamos visualmente la calificación enviada
+                starsContainer.classList.add("rated");
+                stars.forEach((star, index) => {
+                    // (index < puntuacion) es true para 1, 2, 3 si puntuacion es 4
+                    star.classList.toggle("active", index < puntuacion);
+                });
+            } else {
+                alert("Error al enviar calificación: " + data.error);
+            }
+        } catch (e) {
+            console.error("Error al calificar:", e);
+            alert("Error de red al calificar.");
+        }
+    };
+
+    // Añadimos el "click" a cada estrella
+    stars.forEach(star => {
+        star.addEventListener("click", () => {
+            const value = parseInt(star.dataset.value, 10);
+            sendRating(value);
+        });
+    });
+}
 
     async function enviarMensaje(e) {
         e.preventDefault();

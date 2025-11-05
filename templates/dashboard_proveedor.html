@@ -2,57 +2,242 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Zerby - Mi Perfil de Proveedor</title>
+    <title>Zerby - Mi Panel de Proveedor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; }
         nav { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Estilos para el portafolio */
+        .portfolio-manager {
+            max-width: 900px;
+            margin: 20px 0;
+        }
+        .form-add-portfolio {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .form-add-portfolio input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .form-add-portfolio button {
+            padding: 10px 15px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .portfolio-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .portfolio-item {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        .portfolio-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            display: block;
+        }
+        .portfolio-item p {
+            padding: 10px;
+            font-size: 14px;
+            margin: 0;
+            background: #fdfdfd;
+        }
+        .portfolio-item .delete-btn {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+        .portfolio-item .delete-btn:hover { opacity: 1; }
     </style>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-    <!-- Bootstrap 5 (solo CSS, sin JS) -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Tu tema visual (lo creamos en el paso 2) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-
 </head>
 <body>
 
     <nav>
-    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
-    <div>
-        <a href="/bandeja_entrada" style="margin-right: 15px;">Bandeja de Entrada</a>
-        <a href="/api/logout">Cerrar Sesión</a>
-    </div>
-</nav>
+        <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
+        <div>
+            <a id="ver-mi-perfil-link" href="#" style="margin-right: 15px; display: none;">Ver mi Perfil Público</a>
+            <a href="/bandeja_entrada" style="margin-right: 15px;">Bandeja de Entrada</a>
+            <a href="/api/logout">Cerrar Sesión</a>
+        </div>
+    </nav>
     <hr>
     
     <h2>Tu Panel de Proveedor</h2>
-    <p>Aquí podrás ver tus solicitudes de servicio, editar tu perfil y gestionar tu disponibilidad.</p>
-    
-    <h3>Tus datos actuales:</h3>
-    <p><strong>Email:</strong> <span id="email-span"></span></p>
-    <p><strong>Tipo de cuenta:</strong> <span id="tipo-span"></span></sppa>
-    <p><strong>Oficio:</strong> <span id="oficio-span"></span></sppa>
+    <p>Gestiona los trabajos de tu portafolio. Estos se mostrarán en tu perfil público.</p>
+
+    <div class="portfolio-manager">
+        
+        <form class="form-add-portfolio" id="form-add-portfolio">
+            <h4>Añadir nuevo trabajo al portafolio</h4>
+            <input type="url" id="input-imagen-url" placeholder="URL de la imagen (ej: https://...)" required>
+            <input type="text" id="input-imagen-desc" placeholder="Descripción (ej: 'Reparación de lavamanos')">
+            <button type="submit">Añadir Trabajo</button>
+        </form>
+
+        <h3 style="margin-top: 30px;">Tus Trabajos Actuales</h3>
+        <div class="portfolio-grid" id="portfolio-grid">
+            <p>Cargando trabajos...</p>
+        </div>
+    </div>
 
 <script>
+    const portfolioGrid = document.getElementById('portfolio-grid');
+
     window.addEventListener('load', async function() {
-        const response = await fetch('/api/get_profile');
-        
-        if (!response.ok) {
+        let profileData;
+        try {
+            // 1. Cargar datos del perfil (nombre, etc.)
+            const responseProfile = await fetch('/api/get_profile');
+            if (!responseProfile.ok) throw new Error('No autorizado');
+            profileData = await responseProfile.json();
+            
+            document.querySelector('#welcome-msg span').textContent = profileData.nombre;
+            const linkPerfil = document.getElementById('ver-mi-perfil-link');
+            linkPerfil.href = `/perfil/proveedor/${profileData.id}`;
+            linkPerfil.style.display = 'inline-block';
+
+        } catch (e) {
             window.location.href = '/login';
             return;
         }
-        
-        const datos = await response.json();
-        document.querySelector('#welcome-msg span').textContent = datos.nombre;
-        document.getElementById('email-span').textContent = datos.email;
-        document.getElementById('tipo-span').textContent = datos.tipo;
+
+        // 2. Cargar datos del portafolio (usamos la API pública)
+        try {
+            const responsePortfolio = await fetch(`/api/perfil/proveedor/${profileData.user_id_debes_pasarlo_de_get_profile}`);
+            // --- OJO: /api/get_profile DEBE DEVOLVER EL ID DEL USUARIO ---
+            // --- VAMOS A ASUMIR QUE USAMOS EL ID DE LA SESIÓN ---
+            
+            // Corrección: /api/get_profile no nos da el ID.
+            // PERO /api/perfil/proveedor usa el ID del proveedor, 
+            // y como estamos logueados como proveedor, ¡podemos usar la API!
+            
+            // La API /api/get_profile es limitada. Usaremos la API del perfil público
+            // pero le pasaremos el ID que tenemos... un momento.
+            // ¡/api/get_profile no nos da nuestro propio ID!
+            
+            // --- ¡GRAN PROBLEMA Y SOLUCIÓN! ---
+            // Modificaremos /api/get_profile en app.py para que devuelva el ID
+            
+            // (Añade "id": user.id en el return jsonify de /api/get_profile)
+            // Asumamos que ya hiciste ese cambio (ver Paso 7)
+            
+            const responseData = await fetch(`/api/perfil/proveedor/${profileData.id}`);
+            if (!responseData.ok) throw new Error('Error cargando datos');
+            
+            const data = await responseData.json();
+            mostrarPortafolio(data.portafolio);
+
+        } catch (e) {
+            console.error(e);
+            portfolioGrid.innerHTML = "<p>Error al cargar tu portafolio.</p>";
+        }
     });
+
+    function mostrarPortafolio(items) {
+        portfolioGrid.innerHTML = '';
+        if (items.length === 0) {
+            portfolioGrid.innerHTML = "<p>Aún no has subido trabajos a tu portafolio.</p>";
+            return;
+        }
+        items.forEach(item => {
+            agregarItemGrid(item);
+        });
+    }
+
+    function agregarItemGrid(item) {
+        const div = document.createElement('div');
+        div.className = 'portfolio-item';
+        div.id = `item-${item.id}`;
+        div.innerHTML = `
+            <img src="${item.imagen_url}" alt="${item.descripcion || 'Trabajo'}">
+            <p>${item.descripcion || 'Sin descripción'}</p>
+            <button class="delete-btn" onclick="eliminarTrabajo(${item.id})">X</button>
+        `;
+        portfolioGrid.appendChild(div);
+    }
+
+    // --- Lógica de Formularios ---
+
+    document.getElementById('form-add-portfolio').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const url = document.getElementById('input-imagen-url').value;
+        const desc = document.getElementById('input-imagen-desc').value;
+
+        try {
+            const response = await fetch('/api/portafolio/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imagen_url: url, descripcion: desc })
+            });
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al añadir');
+            }
+            
+            agregarItemGrid(data.item); // Añadimos el nuevo item al grid
+            document.getElementById('form-add-portfolio').reset(); // Limpiamos form
+
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
+    });
+
+    async function eliminarTrabajo(itemId) {
+        if (!confirm('¿Estás seguro de que quieres eliminar este trabajo?')) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/portafolio/delete/${itemId}`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al eliminar');
+            }
+
+            document.getElementById(`item-${itemId}`).remove(); // Elimina del DOM
+            alert(data.mensaje);
+
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
+    }
 </script>
 
 </body>

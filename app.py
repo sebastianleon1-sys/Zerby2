@@ -1,11 +1,12 @@
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for
+from flask import Flask, request, jsonify, render_template, session, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
 from datetime import datetime, timezone
-from flask import Flask, request, jsonify, render_template, session, redirect, url_for, abort
-from flask_socketio import SocketIO, emit, join_room, leave_room #para chat en tiempo real
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from sqlalchemy import func # <-- IMPORTADO
+from sqlalchemy.exc import IntegrityError # <-- IMPORTADO
 
 load_dotenv()
 
@@ -29,6 +30,7 @@ socketio = SocketIO(
     engineio_logger=True
 )
 
+# --- MODELOS ---
 
 class Usuario(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -60,7 +62,6 @@ class Proveedor(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
 
 class Conversacion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -78,6 +79,29 @@ class Mensaje(db.Model):
     contenido = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
 
+class Calificacion(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    puntuacion = db.Column(db.Integer, nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    comentario = db.Column(db.Text, nullable=True) # <-- CAMPO NUEVO
+
+    __table_args__ = (
+        db.UniqueConstraint('usuario_id', 'proveedor_id', name='uq_usuario_proveedor_calificacion'),
+        db.CheckConstraint('puntuacion >= 1 AND puntuacion <= 7', name='check_puntuacion_range')
+    )
+
+class Portafolio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
+    imagen_url = db.Column(db.Text, nullable=False) 
+    descripcion = db.Column(db.Text, nullable=True) 
+    timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+    proveedor = db.relationship('Proveedor', backref=db.backref('portafolios', lazy=True, cascade="all, delete-orphan"))
+
+
+# --- RUTAS DE PÁGINAS ---
 
 @app.route('/')
 def index():
@@ -115,6 +139,7 @@ def dashboard():
     else:
         return redirect(url_for('api_logout'))
 
+# --- RUTAS DE AUTENTICACIÓN Y PERFIL ---
 
 @app.route('/api/login', methods=['POST'])
 def api_login():
@@ -151,15 +176,23 @@ def get_profile():
     
     if user_type == 'usuario':
         user = Usuario.query.get(user_id)
+        profile_data = {
+            "id": user.id, # <-- ID AÑADIDO
+            "nombre": user.nombre_completo,
+            "email": user.email,
+            "tipo": user_type
+        }
     else:
         user = Proveedor.query.get(user_id)
+        profile_data = {
+            "id": user.id, # <-- ID AÑADIDO
+            "nombre": user.nombre_completo,
+            "email": user.email,
+            "tipo": user_type,
+            "oficio": user.oficio
+        }
         
-    return jsonify({
-        "nombre": user.nombre_completo,
-        "email": user.email,
-        "tipo": user_type
-    })
-
+    return jsonify(profile_data)
 
 @app.route('/registrar/usuario', methods=['POST'])
 def registrar_usuario():
@@ -206,29 +239,65 @@ def registrar_proveedor():
     
     return jsonify({"mensaje": "Proveedor registrado con éxito"}), 201
 
+# --- FUNCIONES HELPER PARA BÚSQUEDA ---
+
+def _get_base_query_proveedores_con_calif():
+    """
+    Crea la consulta base de Proveedor unida (outerjoin)
+    a la subconsulta de calificaciones (promedio y total).
+    """
+    calif_subquery = db.session.query(
+        Calificacion.proveedor_id,
+        func.avg(Calificacion.puntuacion).label('calif_promedio'),
+        func.count(Calificacion.id).label('calif_total')
+    ).group_by(Calificacion.proveedor_id).subquery()
+
+    return db.session.query(
+        Proveedor, 
+        calif_subquery.c.calif_promedio, 
+        calif_subquery.c.calif_total
+    ).outerjoin(
+        calif_subquery, Proveedor.id == calif_subquery.c.proveedor_id
+    )
+
+def _serializar_proveedores_con_calif(resultados_query):
+    """
+    Toma los resultados de la consulta (Proveedor, promedio, total) 
+    y los convierte en una lista de diccionarios JSON.
+    """
+    lista_proveedores = []
+    for p, promedio, total in resultados_query:
+        lista_proveedores.append({
+            "proveedor_id": p.id,
+            "nombre": p.nombre_completo,
+            "oficio": p.oficio,
+            "descripcion": p.descripcion,
+            "telefono": p.telefono,
+            "comuna": p.comuna,
+            "horario": p.horario,
+            "atiende_urgencias": p.atiende_urgencias,
+            "calif_promedio": round(float(promedio), 1) if promedio else 0,
+            "calif_total": int(total) if total else 0
+        })
+    return lista_proveedores
+
+# --- RUTAS DE BÚSQUEDA DE PROVEEDORES ---
+
 @app.route('/api/proveedores/cercanos')
 def api_proveedores_cercanos():
     if 'user_id' not in session or session['user_type'] != 'usuario':
         return jsonify({"error": "No autorizado"}), 401
 
     try:
-        proveedores = Proveedor.query.limit(10).all()
-        lista_proveedores = []
-        for p in proveedores:
-            lista_proveedores.append({
-                "proveedor_id": p.id,
-                "nombre": p.nombre_completo,
-                "oficio": p.oficio,
-                "descripcion": p.descripcion,
-                "telefono": p.telefono,
-                "comuna": p.comuna,
-                "horario": p.horario,
-                "atiende_urgencias": p.atiende_urgencias
-            })
+        base_query = _get_base_query_proveedores_con_calif()
+        proveedores_con_calif = base_query.limit(10).all()
+        lista_proveedores = _serializar_proveedores_con_calif(proveedores_con_calif)
 
         return jsonify(lista_proveedores)
 
     except Exception as e:
+        # --- LÍNEA DE DEPURACIÓN AÑADIDA ---
+        print(f"!!! ERROR en /api/proveedores/cercanos: {e}") 
         return jsonify({"error": str(e)}), 500
 
 
@@ -241,7 +310,8 @@ def api_buscar():
     comuna = request.args.get('comuna', '')
     
     try:
-        base_query = Proveedor.query
+        base_query = _get_base_query_proveedores_con_calif() 
+        
         if query:
             termino_busqueda = f"%{query}%"
             base_query = base_query.filter(
@@ -253,24 +323,16 @@ def api_buscar():
             comuna_busqueda = f"%{comuna}%" 
             base_query = base_query.filter(Proveedor.comuna.ilike(comuna_busqueda))
 
-        proveedores = base_query.all()
-        lista_proveedores = []
-        for p in proveedores:
-            lista_proveedores.append({
-                "proveedor_id": p.id,
-                "nombre": p.nombre_completo,
-                "oficio": p.oficio,
-                "descripcion": p.descripcion,
-                "telefono": p.telefono,
-                "comuna": p.comuna,
-                "horario": p.horario,
-                "atiende_urgencias": p.atiende_urgencias
-            })
+        proveedores_con_calif = base_query.all()
+        lista_proveedores = _serializar_proveedores_con_calif(proveedores_con_calif)
             
         return jsonify(lista_proveedores)
     
     except Exception as e:
+        print(f"!!! ERROR en /api/buscar: {e}") # <-- Línea de depuración
         return jsonify({"error": str(e)}), 500
+
+# --- RUTAS DE CHAT Y MENSAJERÍA ---
     
 @app.route('/api/iniciar_chat/<int:proveedor_id>', methods=['POST'])
 def api_iniciar_chat(proveedor_id):
@@ -298,14 +360,11 @@ def api_iniciar_chat(proveedor_id):
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": str(e)}), 500
-        
-# --- 5. Rutas de PÁGINAS (Mensajería) ---
 
 @app.route('/bandeja_entrada')
 def bandeja_entrada():
     if 'user_id' not in session:
         return redirect(url_for('login_page'))
-    # Esta página cargará los chats usando JavaScript
     return render_template('bandeja_entrada.html')
 
 @app.route('/conversacion/<int:conv_id>')
@@ -313,23 +372,17 @@ def vista_conversacion(conv_id):
     if 'user_id' not in session:
         return redirect(url_for('login_page'))
     
-    # 1. Verificar que el chat existe
     conv = Conversacion.query.get_or_404(conv_id)
     user_id = session['user_id']
     user_type = session['user_type']
 
-    # 2. Verificar que el usuario actual es parte de este chat
     if (user_type == 'usuario' and conv.usuario_id != user_id) or \
        (user_type == 'proveedor' and conv.proveedor_id != user_id):
-        return abort(403) # Error 403: Prohibido
+        return abort(403) 
 
-    # 3. Enviar a la plantilla el ID del chat y el tipo de usuario
     return render_template('conversacion.html', 
                            conv_id=conv_id, 
                            user_tipo_actual=user_type)
-
-
-# --- 6. Rutas de API (Mensajería) ---
 
 @app.route('/api/conversaciones')
 def api_get_conversaciones():
@@ -341,7 +394,6 @@ def api_get_conversaciones():
     lista_convos = []
     
     if user_type == 'usuario':
-        # Cliente: Busca sus chats y el nombre del PROVEEDOR
         conversaciones = db.session.query(Conversacion, Proveedor.nombre_completo, Proveedor.oficio)\
             .join(Proveedor, Conversacion.proveedor_id == Proveedor.id)\
             .filter(Conversacion.usuario_id == user_id).all()
@@ -353,7 +405,6 @@ def api_get_conversaciones():
                 "detalle": oficio
             })
     else: # user_type == 'proveedor'
-        # Proveedor: Busca sus chats y el nombre del CLIENTE
         conversaciones = db.session.query(Conversacion, Usuario.nombre_completo)\
             .join(Usuario, Conversacion.usuario_id == Usuario.id)\
             .filter(Conversacion.proveedor_id == user_id).all()
@@ -386,13 +437,14 @@ def api_get_detalles_conv(conv_id):
         mensajes_json.append({
             "contenido": msg.contenido,
             "remitente_tipo": msg.remitente_tipo,
-            # Formateamos la hora para que sea legible
             "timestamp": msg.timestamp.strftime("%d/%m %H:%M") 
         })
     
     return jsonify({
         "otro_nombre": otro_nombre,
-        "mensajes": mensajes_json
+        "mensajes": mensajes_json,
+        # --- LÍNEA CORREGIDA (la que faltaba) ---
+        "proveedor_id": conv.proveedor_id if user_type == 'usuario' else None
     })
 
 @app.route('/api/conversacion/<int:conv_id>/enviar', methods=['POST'])
@@ -424,7 +476,6 @@ def api_enviar_mensaje(conv_id):
         db.session.add(nuevo_mensaje)
         db.session.commit()
 
-        # 👇 EMITIR MENSAJE A LA SALA
         payload = {
             "contenido": nuevo_mensaje.contenido,
             "remitente_tipo": nuevo_mensaje.remitente_tipo,
@@ -440,6 +491,172 @@ def api_enviar_mensaje(conv_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+# --- RUTAS DE CALIFICACIÓN Y PERFIL PÚBLICO ---
+
+@app.route('/api/calificar/<int:proveedor_id>', methods=['POST'])
+def api_calificar(proveedor_id):
+    if 'user_id' not in session or session['user_type'] != 'usuario':
+        return jsonify({"error": "No autorizado"}), 401
+
+    datos = request.json
+    puntuacion = datos.get('puntuacion')
+    comentario = datos.get('comentario', '').strip() # <-- CAMPO NUEVO
+    usuario_id = session['user_id']
+
+    if not isinstance(puntuacion, int) or not (1 <= puntuacion <= 7):
+        return jsonify({"error": "Puntuación debe ser un número entero entre 1 y 7"}), 400
+
+    proveedor = Proveedor.query.get(proveedor_id)
+    if not proveedor:
+        return jsonify({"error": "Proveedor no encontrado"}), 404
+
+    calificacion_existente = Calificacion.query.filter_by(
+        usuario_id=usuario_id, 
+        proveedor_id=proveedor_id
+    ).first()
+
+    try:
+        if calificacion_existente:
+            calificacion_existente.puntuacion = puntuacion
+            calificacion_existente.comentario = comentario # <-- ACTUALIZADO
+            calificacion_existente.timestamp = datetime.now(timezone.utc)
+            db.session.commit()
+            return jsonify({"mensaje": "Calificación actualizada"}), 200
+        else:
+            nueva_calificacion = Calificacion(
+                usuario_id=usuario_id,
+                proveedor_id=proveedor_id,
+                puntuacion=puntuacion,
+                comentario=comentario # <-- ACTUALIZADO
+            )
+            db.session.add(nueva_calificacion)
+            db.session.commit()
+            return jsonify({"mensaje": "Calificación enviada"}), 201
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/perfil/proveedor/<int:proveedor_id>')
+def perfil_proveedor(proveedor_id):
+    """Ruta que renderiza la PÁGINA de perfil (vacía)."""
+    proveedor = Proveedor.query.get_or_404(proveedor_id)
+    return render_template('perfil_proveedor.html', 
+                             proveedor_id=proveedor.id, 
+                             proveedor_nombre=proveedor.nombre_completo)
+
+@app.route('/api/perfil/proveedor/<int:proveedor_id>')
+def api_get_perfil_proveedor(proveedor_id):
+    """API que entrega los DATOS del perfil (info, portafolio, ratings)."""
+    proveedor = Proveedor.query.get_or_404(proveedor_id)
+    
+    calificaciones_db = db.session.query(
+        Calificacion, Usuario.nombre_completo
+    ).join(
+        Usuario, Calificacion.usuario_id == Usuario.id
+    ).filter(
+        Calificacion.proveedor_id == proveedor_id
+    ).order_by(
+        Calificacion.timestamp.desc()
+    ).all()
+
+    calificaciones_json = []
+    for calif, nombre_usuario in calificaciones_db:
+        calificaciones_json.append({
+            "puntuacion": calif.puntuacion,
+            "comentario": calif.comentario,
+            "nombre_usuario": nombre_usuario,
+            "timestamp": calif.timestamp.strftime("%d/%m/%Y")
+        })
+
+    portafolio_db = Portafolio.query.filter_by(
+        proveedor_id=proveedor_id
+    ).order_by(Portafolio.timestamp.desc()).all()
+    
+    portafolio_json = [{
+        "id": item.id,
+        "imagen_url": item.imagen_url,
+        "descripcion": item.descripcion
+    } for item in portafolio_db]
+
+    stats = db.session.query(
+        func.avg(Calificacion.puntuacion).label('promedio'),
+        func.count(Calificacion.id).label('total')
+    ).filter(Calificacion.proveedor_id == proveedor_id).first()
+    
+    promedio = round(float(stats.promedio), 1) if stats.promedio else 0
+    total = int(stats.total) if stats.total else 0
+    
+    perfil_data = {
+        "nombre": proveedor.nombre_completo,
+        "oficio": proveedor.oficio,
+        "descripcion": proveedor.descripcion,
+        "comuna": proveedor.comuna,
+        "horario": proveedor.horario,
+        "atiende_urgencias": proveedor.atiende_urgencias,
+        "calif_promedio": promedio,
+        "calif_total": total,
+        "calificaciones": calificaciones_json,
+        "portafolio": portafolio_json,
+        "telefono": proveedor.telefono # Añadido teléfono al perfil
+    }
+    return jsonify(perfil_data)
+
+@app.route('/api/portafolio/add', methods=['POST'])
+def api_add_portafolio():
+    """API para que el proveedor añada un item a su portafolio."""
+    if 'user_id' not in session or session['user_type'] != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    proveedor_id = session['user_id']
+    datos = request.json
+    imagen_url = datos.get('imagen_url')
+    descripcion = datos.get('descripcion')
+
+    if not imagen_url:
+        return jsonify({"error": "La URL de la imagen es obligatoria"}), 400
+    
+    try:
+        nuevo_item = Portafolio(
+            proveedor_id=proveedor_id,
+            imagen_url=imagen_url,
+            descripcion=descripcion
+        )
+        db.session.add(nuevo_item)
+        db.session.commit()
+        return jsonify({
+            "mensaje": "Trabajo añadido", 
+            "item": {
+                "id": nuevo_item.id,
+                "imagen_url": nuevo_item.imagen_url,
+                "descripcion": nuevo_item.descripcion
+            }
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/portafolio/delete/<int:item_id>', methods=['DELETE'])
+def api_delete_portafolio(item_id):
+    """API para que el proveedor elimine un item de su portafolio."""
+    if 'user_id' not in session or session['user_type'] != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    proveedor_id = session['user_id']
+    item = Portafolio.query.get_or_404(item_id)
+    
+    if item.proveedor_id != proveedor_id:
+        return jsonify({"error": "No autorizado"}), 403
+        
+    try:
+        db.session.delete(item)
+        db.session.commit()
+        return jsonify({"mensaje": "Trabajo eliminado"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# --- SOCKET.IO ---
 
 @socketio.on("join")
 def handle_join(data):
@@ -466,8 +683,6 @@ def handle_join(data):
     print(f"[JOIN] user={user_id} tipo={user_type} -> room={room}")
     emit("joined", {"conv_id": conv_id})
 
-
-
 @socketio.on("connect")
 def on_connect():
     print("Usuario conectado al socket:", request.sid)
@@ -477,5 +692,4 @@ def on_disconnect():
     print("Usuario desconectado del socket:", request.sid)
 
 if __name__ == "__main__":
-    # con gevent, socketio.run funciona perfecto
     socketio.run(app, host="127.0.0.1", port=5000, debug=True, use_reloader=False)
