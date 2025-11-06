@@ -117,11 +117,15 @@
          <div>
             <label>Describe tu servicio:</label>
             <textarea name="descripcion"></textarea>
-        </div>
+        </div> 
         
         <div>
-            <label>Comuna (Ej: La Florida, Providencia):</label>
+            <label>(ANTIGUO SISTEMA) Comuna (Ej: La Florida, Providencia):</label>
             <input type="text" name="comuna">
+        </div>
+        <div>
+            <label for="direccion">Dirección (para geolocalización):</label>
+        <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle 123, Santiago, Chile" required><br>
         </div>
         <div>
             <label>Horario de Atención (Ej: L-V 9-18h):</label>
@@ -133,7 +137,6 @@
                 ¿Atiendes urgencias 24/7?
             </label>
         </div>
-
         <button type="submit">Registrarme como Proveedor</button>
         <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
         <p>¿Buscas un servicio? <a href="/registro/usuario">Regístrate como cliente</a></p>

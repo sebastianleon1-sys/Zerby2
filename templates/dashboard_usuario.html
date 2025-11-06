@@ -187,6 +187,8 @@
 
     <section class="results-container">
         <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
+        <!-- Nuevo botón para buscar cercanos -->
+        <button id="buscar-cercanos">Buscar Proveedores Cercanos</button>
         <div id="results-list">
             </div>
     </section>
@@ -318,6 +320,34 @@
             mostrarProveedores(proveedores);
         } catch (e) {
             console.error("Error en la búsqueda:", e);
+        }
+    });
+
+    // Nuevo event listener para el botón de búsqueda cercanos
+    document.getElementById('buscar-cercanos').addEventListener('click', async function() {
+        const resultsTitle = document.getElementById('results-title');
+        resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
+
+        try {
+            const response = await fetch('/api/proveedores/cercanos');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error en la búsqueda por cercanía');
+            }
+            const proveedores = await response.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error al cargar proveedores cercanos:", e);
+            // Fallback a búsqueda por comuna default (e.g., 'Santiago')
+            alert('No se pudo obtener ubicación. Mostrando resultados por comuna: Santiago');
+            try {
+                const responseFallback = await fetch('/api/buscar?comuna=Santiago');
+                const proveedoresFallback = await responseFallback.json();
+                mostrarProveedores(proveedoresFallback);
+            } catch (fallbackError) {
+                console.error("Error en fallback:", fallbackError);
+                document.getElementById('results-list').innerHTML = '<p>Error al cargar resultados. Intenta de nuevo.</p>';
+            }
         }
     });
 
