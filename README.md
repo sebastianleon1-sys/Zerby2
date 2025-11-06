@@ -1,7 +1,7 @@
 **HAY NUEVA ACTUALIZACION EN LA BRANCH address-update.** 
 ===============
 
-Se agregaron nuevos logos:
+Se agregaron nuevos logos y sistema de geolocalizacion:
 
 _logo_zerby_white:
 <img width="918" height="198" alt="logo_zerby_white" src="https://github.com/user-attachments/assets/f8323138-1e78-4afd-95cd-b436206ab192" />
