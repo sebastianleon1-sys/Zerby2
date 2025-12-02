@@ -1,4 +1,15 @@
-**HAY NUEVA ACTUALIZACION EN LA BRANCH address-update.** 
+**(02/12) HAY NUEVA ACTUALIZACION EN LA BRANCH new-branch.** 
+===============
+**Cambios:**
+-Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)
+-El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
+-Los proveedores ahora pueden subir archivos y no URL para las imagenes
+**Falta:**
+-Actualizar formulario de registro, ya no se usan comunas (sistema antiguo)
+-Sistema de pago
+-Que los proveedores puedan cambiar su direccion
+
+**(05/11) HAY NUEVA ACTUALIZACION EN LA BRANCH address-update.** 
 ===============
 
 Se agregaron nuevos logos y sistema de geolocalizacion:
