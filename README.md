@@ -1,8 +1,8 @@
 **(02/12) HAY NUEVA ACTUALIZACION EN LA BRANCH new-branch.** 
 ===============
 **Cambios:**
--Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)
--El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
+__-Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)__
+__-El usuario puede cambiar su direccion (falta hacer eso para los proveedores)__
 -Los proveedores ahora pueden subir archivos y no URL para las imagenes
 **Falta:**
 -Actualizar formulario de registro, ya no se usan comunas (sistema antiguo)
