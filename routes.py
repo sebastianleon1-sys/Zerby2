@@ -491,6 +491,8 @@ def perfil_usuario(user_id):
          pass 
     return render_template('perfil_usuario.html', usuario=usuario)
 
+
+
 @app.route('/perfil/proveedor/<int:proveedor_id>')
 def perfil_proveedor(proveedor_id):
     proveedor = Proveedor.query.get_or_404(proveedor_id)

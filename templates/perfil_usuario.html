@@ -30,23 +30,8 @@
             <label>Teléfono</label>
             <input type="text" id="telefono" class="form-control" value="{{ usuario.telefono or '' }}" placeholder="+56 9...">
 
-            <label>Comuna</label>
-            <select id="comuna" class="form-select">
-                <option value="">Selecciona tu comuna</option>
-                <option value="Santiago">Santiago</option>
-                <option value="Providencia">Providencia</option>
-                <option value="Las Condes">Las Condes</option>
-                <option value="La Florida">La Florida</option>
-                <option value="Maipú">Maipú</option>
-                <option value="Ñuñoa">Ñuñoa</option>
-                <option value="Puente Alto">Puente Alto</option>
-                <option value="San Miguel">San Miguel</option>
-                <option value="Vitacura">Vitacura</option>
-                <option value="Lo Barnechea">Lo Barnechea</option>
-            </select>
-
-            <label>Dirección (Calle y Número)</label>
-            <input type="text" id="direccion" class="form-control" value="{{ usuario.direccion or '' }}" placeholder="Ej: Av. Providencia 1234">
+            <label>Dirección (Calle, número y comuna)</label>
+            <input type="text" id="direccion" class="form-control" value="{{ usuario.direccion or '' }}" placeholder="Ej: Av. Providencia 1234, Santiago">
 
             <button type="submit" class="btn btn-save">Guardar Cambios</button>
         </form>
@@ -55,12 +40,6 @@
     </div>
 
     <script>
-        // Esto selecciona automáticamente la comuna que el usuario ya tenía guardada
-        const comunaGuardada = "{{ usuario.comuna or '' }}";
-        if(comunaGuardada) {
-            document.getElementById('comuna').value = comunaGuardada;
-        }
-
         // Lógica para enviar el formulario sin recargar la página
         document.getElementById('form-perfil').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -72,7 +51,6 @@
 
             const datos = {
                 telefono: document.getElementById('telefono').value,
-                comuna: document.getElementById('comuna').value,
                 direccion: document.getElementById('direccion').value
             };
 
