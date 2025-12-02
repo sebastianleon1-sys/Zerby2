@@ -1,9 +1,8 @@
 **(02/12) HAY NUEVA ACTUALIZACION EN LA BRANCH new-branch.** 
 ===============
-**Cambios:**
+## Cambios: 
 
-
-## Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)
+**Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)**
 
 1. El archivo app.py se separó en: 
   * app.py -> para iniciar la aplicacion y generar el modelo de la base de datos
