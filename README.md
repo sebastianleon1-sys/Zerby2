@@ -2,15 +2,14 @@
 ===============
 ## Cambios: 
 
-**Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)**
-
-1. El archivo app.py se separó en: 
+1. El archivo app.py se separó en:
   * app.py -> para iniciar la aplicacion y generar el modelo de la base de datos
   * routes.py -> maneja las rutas, endpoints, API
 
-2. El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
+2. Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)
+3. El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
 
-3. Los proveedores ahora pueden subir archivos y no URL para las imagenes
+4. Los proveedores ahora pueden subir archivos y no URL para las imagenes
 
 **Falta:**
 
