@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -395,4 +396,384 @@ window.addEventListener('load', async function() {
 </script>
 
 </body>
+=======
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Buscar Servicios</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
+        nav { display: flex; justify-content: space-between; align-items: center; }
+        nav h1 { font-size: 20px; }
+        nav h1 span { font-weight: normal; }
+        
+        .search-container {
+            margin: 20px 0; display: flex; gap: 10px;
+        }
+        .search-container input {
+            flex-grow: 1; padding: 12px; font-size: 16px;
+        }
+        .search-container button {
+            padding: 12px 20px; font-size: 16px; background: #007bff; color: white; border: none; cursor: pointer;
+        }
+
+        .results-container h2 {
+            border-bottom: 2px solid #eee; padding-bottom: 10px;
+        }
+        .provider-card {
+            background: white; border: 1px solid #ddd;
+            padding: 15px; margin-bottom: 10px; border-radius: 8px;
+        }
+        .provider-card h3 {
+            margin: 0 0 5px 0; color: #007bff;
+        }
+        .provider-card .proveedor-nombre {
+            font-weight: bold; background: #eee; padding: 3px 6px; border-radius: 4px;
+            font-size: 14px;
+            color: #333;
+        }
+        .provider-card p {
+            margin: 10px 0 0 0;
+        }
+        .provider-card .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .provider-card .badge-urgente {
+            background: #dc3545;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 10px;
+        }
+        
+    .chat-button {
+        background: #28a745; 
+        color: white;
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-weight: bold;
+        float: right; 
+        margin-top: -10px; 
+    }
+    .chat-button:hover {
+        background: #218838;
+    }
+
+    /* ===== NAV: que no se solapen ===== */
+    nav{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    flex-wrap:wrap;  /* <- permite que bajen a segunda línea en móvil */
+    }
+    nav a{
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:10px 14px; border-radius:10px; text-decoration:none;
+    background: linear-gradient(135deg,#6c5ce7,#00e5a8); color:#fff; font-weight:700;
+    min-height:40px; white-space:nowrap;
+    }
+    @media (max-width:480px){
+    nav a{ width:100%; }        /* en móvil, a todo el ancho */
+    }
+
+    /* ===== Buscador: apilar en móvil ===== */
+    .search-container{
+    display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .search-container input,
+    .search-container select,
+    .search-container button{
+    flex:1 1 100%;
+    height:44px; border-radius:12px;
+    }
+    .search-container button{
+    background:#4f46e5; border:none; color:#fff; font-weight:800;
+    }
+
+    /* ===== Tarjeta del proveedor ===== */
+    .provider-card{ position:relative; }
+
+    /* Cabecera de la tarjeta: oficio + badge alineados */
+    .provider-card .card-header{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    }
+
+    /* Pie de tarjeta para el botón (evita floats) */
+    .card-actions{
+    display:flex; justify-content:flex-end; margin-top:10px;
+    }
+    @media (max-width:480px){
+    .card-actions{ justify-content:center; }
+    }
+
+    /* Botón Contactar (sin float, sin margen negativo) */
+    .chat-button{
+    background:#22c55e; color:#fff; font-weight:800;
+    padding:10px 16px; border:none; border-radius:10px; cursor:pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+    min-width:140px;
+    transition:.2s background, .2s transform;
+    }
+    .chat-button:hover{ background:#16a34a }
+    @media (max-width:480px){
+    .chat-button{ width:100%; }
+    }
+    .rating-display {
+        font-size: 14px;
+        color: #555;
+        margin: 5px 0 10px 0; /* Espacio entre el header y el nombre */
+    }
+    .rating-display strong {
+        color: #000;
+        font-size: 16px;
+    }
+    .rating-count {
+        color: #777;
+        margin-left: 5px;
+    }
+    .proveedor-nombre a {
+        text-decoration: none;
+        color: #333; /* O el color que prefieras */
+        font-weight: bold;
+    }
+    .proveedor-nombre a:hover {
+        text-decoration: underline;
+    }
+    </style>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav>
+    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
+    <div>
+        <a href="/bandeja_entrada" style="margin-right: 15px;">Mis Mensajes</a>
+        <a href="/api/logout">Cerrar Sesión</a>
+    </div>
+</nav>
+    <hr>
+
+    <section class="search-container">
+        <form id="form-busqueda" style="display: contents;">
+    <input type="search" id="search-query" 
+           placeholder="¿Qué servicio necesitas? (ej: electricista)" 
+           style="flex-grow: 2;"> <select id="comuna-filter" style="flex-grow: 1; padding: 12px; font-size: 16px;">
+        <option value="todas">Todas las Comunas</option>
+        <option value="Santiago">Santiago</option>
+        <option value="Providencia">Providencia</option>
+        <option value="Las Condes">Las Condes</option>
+        <option value="La Florida">La Florida</option>
+        <option value="Maipú">Maipú</option>
+        <option value="Ñuñoa">Ñuñoa</option>
+        <option value="Puente Alto">Puente Alto</option>
+        <option value="San Miguel">San Miguel</option>
+        <option value="Vitacura">Vitacura</option>
+        <option value="Lo Barnechea">Lo Barnechea</option>
+        </select>
+    
+    <button type="submit">Buscar</button>
+</form>
+    </section>
+
+    <section class="results-container">
+        <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
+        <!-- Nuevo botón para buscar cercanos -->
+        <button id="buscar-cercanos">Buscar Proveedores Cercanos</button>
+        <div id="results-list">
+            </div>
+    </section>
+
+<script>
+    function mostrarProveedores(proveedores) {
+        // --- AQUÍ ESTABA EL ERROR DE SINTAXIS (YA BORRADO) ---
+        
+        const resultsList = document.getElementById('results-list');
+        resultsList.innerHTML = ''; 
+
+        if (proveedores.length === 0) {
+            resultsList.innerHTML = '<p>No se encontraron proveedores para tu búsqueda.</p>';
+            return;
+        }
+
+        proveedores.forEach(p => {
+            const card = document.createElement('div');
+            card.className = 'provider-card';
+
+            // --- INICIO: Lógica de Calificación ---
+            let ratingHtml = '';
+            if (p.calif_total > 0) {
+                // Si tiene calificaciones, mostramos el promedio sobre 7
+                ratingHtml = `
+                    <div class="rating-display">
+                        ⭐ <strong>${p.calif_promedio} / 7</strong> 
+                        <span class="rating-count">
+                            (${p.calif_total} ${p.calif_total === 1 ? 'calificación' : 'calificaciones'})
+                        </span>
+                    </div>
+                `;
+            } else {
+                // Si no tiene, mostramos un mensaje
+                ratingHtml = `
+                    <div class="rating-display">
+                        <span class="rating-count">(Sin calificaciones aún)</span>
+                    </div>
+                `;
+            }
+            // --- FIN: Lógica de Calificación ---
+
+            card.innerHTML = `
+                <div class="card-header">
+                    <h3>${p.oficio}</h3>
+                    ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
+                </div>
+
+                ${ratingHtml} 
+
+                <span class="proveedor-nombre">
+                    Profesional: 
+                    <a href="/perfil/proveedor/${p.proveedor_id}" target="_blank" title="Ver perfil completo">
+                        ${p.nombre}
+                    </a>
+                </span>
+                
+                <p>${p.descripcion || 'Sin descripción.'}</p>
+                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
+                <p><strong>📍 Comuna:</strong> ${p.comuna || 'No especificada'}</p>
+                <p><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
+                <p><strong>📞 Contacto:</strong> ${p.telefono}</p>
+                <div class="card-actions">
+                    <button class="chat-button" onclick="iniciarChat(${p.proveedor_id})">
+                        Contactar
+                    </button>
+                </div>
+            `;
+            resultsList.appendChild(card);
+        });
+    }
+
+    window.addEventListener('load', async function() {
+        
+        try {
+            const responseProfile = await fetch('/api/get_profile');
+            if (!responseProfile.ok) throw new Error('No autorizado');
+            const datos = await responseProfile.json();
+            document.querySelector('#welcome-msg span').textContent = datos.nombre;
+        } catch (e) {
+            window.location.href = '/login'; 
+        }
+
+        // --- BLOQUE DE DEPURACIÓN AÑADIDO ---
+        const resultsList = document.getElementById('results-list');
+        try {
+            const responseCercanos = await fetch('/api/proveedores/cercanos');
+            if (!responseCercanos.ok) {
+                // Si la respuesta no fue 200 OK, lee el JSON del error
+                const errorData = await responseCercanos.json();
+                throw new Error(errorData.error || `Error ${responseCercanos.status}`);
+            }
+            const proveedores = await responseCercanos.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error al cargar proveedores cercanos:", e);
+            resultsList.innerHTML = `<p style="color: red; font-weight: bold;">Error al cargar proveedores: ${e.message}</p>`;
+        }
+        // --- FIN DEL BLOQUE DE DEPURACIÓN ---
+    });
+
+    document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
+        e.preventDefault(); 
+
+        const query = document.getElementById('search-query').value;
+        const comuna = document.getElementById('comuna-filter').value;
+        const resultsTitle = document.getElementById('results-title');
+
+        if (!query && comuna === 'todas') {
+            resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
+            try {
+                const response = await fetch('/api/proveedores/cercanos');
+                const proveedores = await response.json();
+                mostrarProveedores(proveedores);
+            } catch (e) {
+                console.error("Error al cargar proveedores cercanos:", e);
+            }
+            return; 
+        }
+        
+        let titulo = 'Resultados de Búsqueda';
+        if (query) titulo = `Resultados para "${query}"`;
+        if (comuna !== 'todas') titulo += ` en ${comuna}`;
+        resultsTitle.textContent = titulo;
+        
+        try {
+            const response = await fetch(`/api/buscar?q=${query}&comuna=${comuna}`);
+            const proveedores = await response.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error en la búsqueda:", e);
+        }
+    });
+
+    // Nuevo event listener para el botón de búsqueda cercanos
+    document.getElementById('buscar-cercanos').addEventListener('click', async function() {
+        const resultsTitle = document.getElementById('results-title');
+        resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
+
+        try {
+            const response = await fetch('/api/proveedores/cercanos');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Error en la búsqueda por cercanía');
+            }
+            const proveedores = await response.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error("Error al cargar proveedores cercanos:", e);
+            // Fallback a búsqueda por comuna default (e.g., 'Santiago')
+            alert('No se pudo obtener ubicación. Mostrando resultados por comuna: Santiago');
+            try {
+                const responseFallback = await fetch('/api/buscar?comuna=Santiago');
+                const proveedoresFallback = await responseFallback.json();
+                mostrarProveedores(proveedoresFallback);
+            } catch (fallbackError) {
+                console.error("Error en fallback:", fallbackError);
+                document.getElementById('results-list').innerHTML = '<p>Error al cargar resultados. Intenta de nuevo.</p>';
+            }
+        }
+    });
+
+    async function iniciarChat(proveedorId) {
+        try {
+            const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Error al iniciar el chat');
+            }
+
+            const data = await response.json();
+
+            window.location.href = '/conversacion/' + data.conversacion_id;
+
+        } catch (error) {
+            console.error(error);
+            alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
+        }
+    }
+</script>
+
+</body>
+>>>>>>> aaafc6b04224a148da2d641bf606b0c747bdc61b
 </html>

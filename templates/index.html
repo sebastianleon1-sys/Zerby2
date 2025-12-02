@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -92,4 +93,100 @@
     </section>
 
 </body>
+=======
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zerby - Soluciones a tu alcance</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; color: #333; }
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 30px; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .navbar .logo { font-size: 24px; font-weight: bold; color: #007bff; }
+        .navbar .nav-links a {
+            text-decoration: none; color: #555; font-weight: bold; padding: 8px 15px;
+            border-radius: 5px; transition: background 0.3s;
+        }
+        .navbar .nav-links a.primary { background: #007bff; color: white; }
+        .navbar .nav-links a:hover { background: #f0f0f0; }
+        .navbar .nav-links a.primary:hover { background: #0056b3; }
+
+        .hero {
+            text-align: center; padding: 80px 20px; background: white;
+        }
+        .hero h1 { font-size: 48px; margin-bottom: 10px; }
+        .hero p { font-size: 20px; color: #666; max-width: 600px; margin: 0 auto 30px auto; }
+        .hero .cta-buttons a {
+             text-decoration: none; color: white; background: #28a745;
+             padding: 15px 30px; border-radius: 5px; font-size: 18px;
+             margin: 0 10px; transition: background 0.3s;
+        }
+        .hero .cta-buttons a.secondary { background: #007bff; }
+        .hero .cta-buttons a:hover { opacity: 0.9; }
+
+        .features { padding: 50px 20px; text-align: center; }
+        .features h2 { font-size: 32px; margin-bottom: 40px; }
+        .features-grid { display: flex; justify-content: center; gap: 30px; flex-wrap: wrap; }
+        .feature-card {
+            background: white; padding: 30px; border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+            width: 300px; text-align: left;
+        }
+        .feature-card h3 { color: #007bff; }
+    </style>
+    <!-- Bootstrap 5 (solo CSS, sin JS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Tu tema visual (lo creamos en el paso 2) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo" height="50">
+        </a>
+        <div class="nav-links">
+            <a href="/login" class="primary">Iniciar Sesión</a>
+            <a href="/registro/usuario" class="primary">Registrarse</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Conecta con el profesional que necesitas.</h1>
+        <p>Zerby es la plataforma que te conecta con gasfiters, electricistas, mecánicos, niñeras y más. Rápido, seguro y cerca de ti.</p>
+        <div class="cta-buttons">
+            <a href="/registro/usuario" class="secondary">Quiero Contratar</a>
+            <a href="/registro/proveedor" class="primary">Quiero Ofrecer Servicios</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2>¿Cómo funciona?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <h3>1. ¿Buscas un servicio?</h3>
+                <p>Regístrate como cliente, busca el oficio que necesitas (gasfitería, electricidad, etc.) y filtra por ubicación o calificación.</p>
+            </div>
+            <div class="feature-card">
+                <h3>2. ¿Ofreces un servicio?</h3>
+                <p>Regístrate como proveedor, crea tu perfil, detalla tus habilidades y comienza a recibir solicitudes de clientes.</p>
+            </div>
+            <div class="feature-card">
+                <h3>3. Conecta y Califica</h3>
+                <p>Comunícate de forma segura, concreta el trabajo y califica al profesional o cliente para ayudar a la comunidad.</p>
+            </div>
+        </div>
+    </section>
+
+</body>
+>>>>>>> aaafc6b04224a148da2d641bf606b0c747bdc61b
 </html>
