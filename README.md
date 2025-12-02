@@ -1,19 +1,24 @@
 **(02/12) HAY NUEVA ACTUALIZACION EN LA BRANCH new-branch.** 
 ===============
 **Cambios:**
+
 -Sistema de comunas eliminado (falta eliminarlo de los formularios de registro)
 
--El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
+1. El archivo app.py se separó en: 
+  * app.py -> para iniciar la aplicacion y generar el modelo de la base de datos
+  * routes.py -> maneja las rutas, endpoints, API
 
--Los proveedores ahora pueden subir archivos y no URL para las imagenes
+2. El usuario puede cambiar su direccion (falta hacer eso para los proveedores)
+
+3. Los proveedores ahora pueden subir archivos y no URL para las imagenes
 
 **Falta:**
 
--Actualizar formulario de registro, ya no se usan comunas (sistema antiguo)
+1. Actualizar formulario de registro, ya no se usan comunas (sistema antiguo)
 
--Sistema de pago
+2. Sistema de pago
 
--Que los proveedores puedan cambiar su direccion
+3. Que los proveedores puedan cambiar su direccion
 
 **(05/11) HAY NUEVA ACTUALIZACION EN LA BRANCH address-update.** 
 ===============
