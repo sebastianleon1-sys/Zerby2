@@ -144,6 +144,17 @@
     .proveedor-nombre a:hover {
         text-decoration: underline;
     }
+    
+    /* Estilo para la distancia */
+    .distancia-badge {
+        color: #198754;
+        font-weight: bold;
+        font-size: 0.9em;
+        margin-left: 10px;
+        background: #e8f5e9;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
     </style>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -157,6 +168,7 @@
     <nav>
     <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
     <div>
+        <a id="link-mi-perfil" href="#" style="margin-right: 15px;">Mi perfil</a>
         <a href="/bandeja_entrada" style="margin-right: 15px;">Mis Mensajes</a>
         <a href="/api/logout">Cerrar Sesión</a>
     </div>
@@ -165,36 +177,22 @@
 
     <section class="search-container">
         <form id="form-busqueda" style="display: contents;">
-    <input type="search" id="search-query" 
-           placeholder="¿Qué servicio necesitas? (ej: electricista)" 
-           style="flex-grow: 2;"> <select id="comuna-filter" style="flex-grow: 1; padding: 12px; font-size: 16px;">
-        <option value="todas">Todas las Comunas</option>
-        <option value="Santiago">Santiago</option>
-        <option value="Providencia">Providencia</option>
-        <option value="Las Condes">Las Condes</option>
-        <option value="La Florida">La Florida</option>
-        <option value="Maipú">Maipú</option>
-        <option value="Ñuñoa">Ñuñoa</option>
-        <option value="Puente Alto">Puente Alto</option>
-        <option value="San Miguel">San Miguel</option>
-        <option value="Vitacura">Vitacura</option>
-        <option value="Lo Barnechea">Lo Barnechea</option>
-        </select>
-    
-    <button type="submit">Buscar</button>
-</form>
+            <input type="search" id="search-query" 
+                   placeholder="Buscar por servicio, descripción o dirección..." 
+                   style="flex-grow: 2;"> 
+            <button type="submit">Buscar</button>
+        </form>
     </section>
 
     <section class="results-container">
         <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
+        <button id="buscar-cercanos" class="btn btn-outline-primary btn-sm mb-3">Ver Más Cercanos a Mí</button>
         <div id="results-list">
             </div>
     </section>
 
 <script>
     function mostrarProveedores(proveedores) {
-        // --- AQUÍ ESTABA EL ERROR DE SINTAXIS (YA BORRADO) ---
-        
         const resultsList = document.getElementById('results-list');
         resultsList.innerHTML = ''; 
 
@@ -207,31 +205,28 @@
             const card = document.createElement('div');
             card.className = 'provider-card';
 
-            // --- INICIO: Lógica de Calificación ---
+            // --- Lógica de Calificación ---
             let ratingHtml = '';
             if (p.calif_total > 0) {
-                // Si tiene calificaciones, mostramos el promedio sobre 7
                 ratingHtml = `
                     <div class="rating-display">
                         ⭐ <strong>${p.calif_promedio} / 7</strong> 
-                        <span class="rating-count">
-                            (${p.calif_total} ${p.calif_total === 1 ? 'calificación' : 'calificaciones'})
-                        </span>
-                    </div>
-                `;
+                        <span class="rating-count">(${p.calif_total} calif.)</span>
+                    </div>`;
             } else {
-                // Si no tiene, mostramos un mensaje
-                ratingHtml = `
-                    <div class="rating-display">
-                        <span class="rating-count">(Sin calificaciones aún)</span>
-                    </div>
-                `;
+                ratingHtml = `<div class="rating-display"><span class="rating-count">(Sin calificaciones aún)</span></div>`;
             }
-            // --- FIN: Lógica de Calificación ---
+
+            // --- CAMBIO: Lógica de Distancia ---
+            // Si el backend nos manda 'distancia_km', lo mostramos
+            let distanciaHtml = '';
+            if (p.distancia_km !== undefined) {
+                distanciaHtml = `<span class="distancia-badge">📍 a ${p.distancia_km} km de ti</span>`;
+            }
 
             card.innerHTML = `
                 <div class="card-header">
-                    <h3>${p.oficio}</h3>
+                    <h3>${p.oficio} ${distanciaHtml}</h3>
                     ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
                 </div>
 
@@ -246,9 +241,11 @@
                 
                 <p>${p.descripcion || 'Sin descripción.'}</p>
                 <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-                <p><strong>📍 Comuna:</strong> ${p.comuna || 'No especificada'}</p>
+                
+                <p><strong>📍 Ubicación:</strong> ${p.direccion || 'Sin dirección pública'}</p>
                 <p><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
                 <p><strong>📞 Contacto:</strong> ${p.telefono}</p>
+                
                 <div class="card-actions">
                     <button class="chat-button" onclick="iniciarChat(${p.proveedor_id})">
                         Contactar
@@ -260,22 +257,35 @@
     }
 
     window.addEventListener('load', async function() {
-        
+        // 1. OBTENER MIS DATOS
         try {
             const responseProfile = await fetch('/api/get_profile');
             if (!responseProfile.ok) throw new Error('No autorizado');
             const datos = await responseProfile.json();
+            
             document.querySelector('#welcome-msg span').textContent = datos.nombre;
+
+            const linkPerfil = document.getElementById('link-mi-perfil');
+            if (linkPerfil) linkPerfil.href = `/perfil/usuario/${datos.id}`; 
+
         } catch (e) {
             window.location.href = '/login'; 
+            return;
         }
 
-        // --- BLOQUE DE DEPURACIÓN AÑADIDO ---
+        // 2. CARGAR EL CATÁLOGO (Cercanos por defecto)
+        cargarCercanos();
+    });
+
+    // Función extraída para reutilizarla
+    async function cargarCercanos() {
         const resultsList = document.getElementById('results-list');
+        const resultsTitle = document.getElementById('results-title');
+        resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
+
         try {
             const responseCercanos = await fetch('/api/proveedores/cercanos');
             if (!responseCercanos.ok) {
-                // Si la respuesta no fue 200 OK, lee el JSON del error
                 const errorData = await responseCercanos.json();
                 throw new Error(errorData.error || `Error ${responseCercanos.status}`);
             }
@@ -283,37 +293,28 @@
             mostrarProveedores(proveedores);
         } catch (e) {
             console.error("Error al cargar proveedores cercanos:", e);
-            resultsList.innerHTML = `<p style="color: red; font-weight: bold;">Error al cargar proveedores: ${e.message}</p>`;
+            resultsList.innerHTML = `<p style="color: red;">No se pudo calcular la ubicación. Asegúrate de tener una dirección guardada en tu perfil.</p>`;
         }
-        // --- FIN DEL BLOQUE DE DEPURACIÓN ---
-    });
+    }
 
+    // --- CAMBIO: Búsqueda solo por texto ---
     document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
         e.preventDefault(); 
 
         const query = document.getElementById('search-query').value;
-        const comuna = document.getElementById('comuna-filter').value;
         const resultsTitle = document.getElementById('results-title');
 
-        if (!query && comuna === 'todas') {
-            resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
-            try {
-                const response = await fetch('/api/proveedores/cercanos');
-                const proveedores = await response.json();
-                mostrarProveedores(proveedores);
-            } catch (e) {
-                console.error("Error al cargar proveedores cercanos:", e);
-            }
+        if (!query) {
+            // Si busca vacío, volvemos a mostrar cercanos
+            cargarCercanos();
             return; 
         }
         
-        let titulo = 'Resultados de Búsqueda';
-        if (query) titulo = `Resultados para "${query}"`;
-        if (comuna !== 'todas') titulo += ` en ${comuna}`;
-        resultsTitle.textContent = titulo;
+        resultsTitle.textContent = `Resultados para "${query}"`;
         
         try {
-            const response = await fetch(`/api/buscar?q=${query}&comuna=${comuna}`);
+            // Ya no enviamos &comuna=...
+            const response = await fetch(`/api/buscar?q=${query}`);
             const proveedores = await response.json();
             mostrarProveedores(proveedores);
         } catch (e) {
@@ -321,26 +322,24 @@
         }
     });
 
+    // Botón para volver a ver "Cercanos" después de una búsqueda
+    document.getElementById('buscar-cercanos').addEventListener('click', function() {
+        document.getElementById('search-query').value = ''; // Limpiar buscador
+        cargarCercanos();
+    });
+
     async function iniciarChat(proveedorId) {
         try {
             const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
-
-            if (!response.ok) {
-                throw new Error('Error al iniciar el chat');
-            }
-
+            if (!response.ok) throw new Error('Error al iniciar chat');
             const data = await response.json();
-
             window.location.href = '/conversacion/' + data.conversacion_id;
-
         } catch (error) {
             console.error(error);
-            alert('No se pudo iniciar la conversación. Inténtalo de nuevo.');
+            alert('No se pudo iniciar la conversación.');
         }
     }
 </script>

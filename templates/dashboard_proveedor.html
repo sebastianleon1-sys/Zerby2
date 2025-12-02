@@ -100,9 +100,12 @@
         
         <form class="form-add-portfolio" id="form-add-portfolio">
             <h4>Añadir nuevo trabajo al portafolio</h4>
-            <input type="url" id="input-imagen-url" placeholder="URL de la imagen (ej: https://...)" required>
+            
+            <label for="input-imagen-file" style="font-size: 0.9em; margin-bottom:5px;">Selecciona una foto:</label>
+            <input type="file" id="input-imagen-file" accept="image/*" required>
+            
             <input type="text" id="input-imagen-desc" placeholder="Descripción (ej: 'Reparación de lavamanos')">
-            <button type="submit">Añadir Trabajo</button>
+            <button type="submit">Subir Foto</button>
         </form>
 
         <h3 style="margin-top: 30px;">Tus Trabajos Actuales</h3>
@@ -191,15 +194,30 @@
 
     document.getElementById('form-add-portfolio').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const url = document.getElementById('input-imagen-url').value;
-        const desc = document.getElementById('input-imagen-desc').value;
+        
+        const fileInput = document.getElementById('input-imagen-file');
+        const descInput = document.getElementById('input-imagen-desc');
+
+        if (fileInput.files.length === 0) {
+            alert("Por favor selecciona un archivo");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        
+        // 1. Crear FormData para enviar archivos
+        const formData = new FormData();
+        formData.append('imagen', file); // 'imagen' debe coincidir con request.files['imagen'] en Flask
+        formData.append('descripcion', descInput.value);
 
         try {
+            // Nota: Al enviar FormData, NO ponemos 'Content-Type': 'application/json'
+            // El navegador lo configura automáticamente como multipart/form-data
             const response = await fetch('/api/portafolio/add', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ imagen_url: url, descripcion: desc })
+                body: formData 
             });
+            
             const data = await response.json();
             
             if (!response.ok) {

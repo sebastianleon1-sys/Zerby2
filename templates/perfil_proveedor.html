@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
     <style>
         body { background: #f9f9f9; }
+        
         .profile-container {
             max-width: 900px;
             margin: 20px auto;
@@ -82,8 +83,38 @@
             font-size: 14px;
             color: #777;
         }
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;        
+            padding: 0 20px; /* ← padding izquierda y derecha */
+        }
+
+        .logo img {
+            height: 40px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 15px;
+        }
+
     </style>
 </head>
+<nav>
+    <div class="navbar">
+        <a href="/" class="logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+        </a>
+
+        <div class="nav-links">
+            <a href="/bandeja_entrada">Mis Mensajes</a>
+            <a href="/api/logout">Cerrar Sesión</a>
+        </div>
+    </div>
+</nav>
+
 <body>
 
     <div class="profile-container" id="profile-container">
