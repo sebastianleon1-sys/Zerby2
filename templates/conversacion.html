@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Chat</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
+        .chat-container {
+            max-width: 800px; margin: 20px auto;
+            border: 1px solid #ccc;
+            background: white;
+            display: flex; flex-direction: column;
+            height: calc(100vh - 40px);
+        }
+        .chat-header {
+            padding: 15px 20px;
+            background: #007bff; color: white;
+            border-bottom: 1px solid #ccc;
+        }
+        .chat-header h2 { margin: 0; }
+        .chat-header a { color: white; }
+        .chat-box {
+            flex-grow: 1; padding: 20px;
+            overflow-y: auto;
+            background: #f9f9f9;
+        }
+        .mensaje {
+            padding: 10px 15px;
+            border-radius: 18px;
+            margin-bottom: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .mensaje.recibido {
+            background: #eee;
+            align-self: flex-start;
+        }
+        .mensaje.enviado {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto; /* Alinea a la derecha */
+        }
+        .mensaje .timestamp {
+            font-size: 11px;
+            color: #777;
+            display: block;
+            margin-top: 4px;
+        }
+        .mensaje.enviado .timestamp { color: #f1f1f1; }
+        
+        .chat-form {
+            display: flex; padding: 10px;
+            border-top: 1px solid #ccc;
+        }
+        .chat-form input {
+            flex-grow: 1; padding: 12px;
+            border: 1px solid #ccc; border-radius: 20px;
+        }
+        .chat-form button {
+            padding: 12px 20px; margin-left: 10px;
+            background: #007bff; color: white;
+            border: none; border-radius: 20px;
+            cursor: pointer;
+        }
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap; /* Para móviles */
+        }
+
+        .rating-widget { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            color: white;
+            padding-top: 5px;
+        }
+        .rating-widget .stars { display: flex; }
+        .rating-widget .stars span {
+            font-size: 1.5rem; /* Tamaño de la estrella */
+            cursor: pointer;
+            opacity: 0.3; /* Opacidad inicial */
+            transition: opacity 0.2s, transform 0.1s;
+        }
+
+        /* Al pasar el mouse sobre CUALQUIER estrella */
+        .rating-widget .stars:hover span {
+            opacity: 0.5;
+        }
+
+        /* Al pasar el mouse, iluminamos esa y las anteriores */
+        .rating-widget .stars span:hover,
+        .rating-widget .stars span:hover ~ span {
+            opacity: 0.3; /* Reseteamos las que están "después" */
+        }
+        .rating-widget .stars:hover span:hover,
+        .rating-widget .stars:hover span:hover ~ span {
+            opacity: 0.3;
+        }
+        /* Complicado selector para iluminar las estrellas PREVIAS al hover */
+        .rating-widget .stars:hover span:nth-child(1):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(2):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(3):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(4):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(5):hover ~ span { opacity: 0.3; }
+        .rating-widget .stars:hover span:nth-child(6):hover ~ span { opacity: 0.3; }
+
+        .rating-widget .stars:hover span:nth-child(1):hover { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(2):hover, .rating-widget .stars:hover span:nth-child(2):hover ~ span:nth-child(-n+1) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(3):hover, .rating-widget .stars:hover span:nth-child(3):hover ~ span:nth-child(-n+2) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(4):hover, .rating-widget .stars:hover span:nth-child(4):hover ~ span:nth-child(-n+3) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(5):hover, .rating-widget .stars:hover span:nth-child(5):hover ~ span:nth-child(-n+4) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(6):hover, .rating-widget .stars:hover span:nth-child(6):hover ~ span:nth-child(-n+5) { opacity: 1; transform: scale(1.2); }
+        .rating-widget .stars:hover span:nth-child(7):hover, .rating-widget .stars:hover span:nth-child(7):hover ~ span:nth-child(-n+6) { opacity: 1; transform: scale(1.2); }
+
+        /* Estilo para cuando ya se votó */
+        .rating-widget .stars.rated span { opacity: 0.3; }
+        .rating-widget .stars.rated span.active { opacity: 1; }
+    
+        .chat-header {
+            /* ... (tus estilos existentes) ... */
+            gap: 15px; /* Añade espacio */
+        }
+        .chat-header > div:first-child {
+            flex-grow: 1; /* Permite que el nombre y "volver" crezca */
+        }
+        .rating-widget {
+            /* ... (tus estilos existentes) ... */
+            flex-basis: 300px; /* Ancho base para el widget */
+            flex-wrap: wrap; /* Para que el input baje si no cabe */
+        }
+
+    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <!-- Bootstrap 5 (solo CSS, sin JS) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Tu tema visual (lo creamos en el paso 2) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="chat-header">
+        <div>
+            <a href="/bandeja_entrada" style="float:left; margin-right: 15px;">&larr; Volver</a>
+            <h2 id="chat-with-name">Cargando...</h2>
+        </div>
+
+        {% if user_tipo_actual == 'usuario' %}
+        <div class="rating-widget">
+            <span>Calificar (1-7):</span>
+            <div class="stars" id="stars-widget">
+                <span data-value="1">⭐</span>
+                <span data-value="2">⭐</span>
+                <span data-value="3">⭐</span>
+                <span data-value="4">⭐</span>
+                <span data-value="5">⭐</span>
+                <span data-value="6">⭐</span>
+                <span data-value="7">⭐</span>
+            </div>
+            <input type="text" id="rating-comment" placeholder="Deja un comentario (opcional)" style="width: 100%; margin-top: 5px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 12px; color: #333;">
+        </div>
+        {% endif %}
+        </div>
+        
+        <div class="chat-box" id="chat-box">
+            </div>
+
+        <form class="chat-form" id="form-enviar">
+            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
+            <button type="submit">Enviar</button>
+        </form>
+    </div>
+
+<!-- Socket.IO -->
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+    const CONV_ID = {{ conv_id|tojson }};
+    const USER_TIPO_ACTUAL = {{ user_tipo_actual|tojson }};
+
+    const chatBox = document.getElementById('chat-box');
+    const chatName = document.getElementById('chat-with-name');
+    const form = document.getElementById('form-enviar');
+    const inputMsg = document.getElementById('input-mensaje');
+
+    const socket = io("/", { transports: ['websocket'] });
+
+    socket.on("connect", () => {
+        console.log("Conectado al servidor de sockets", socket.id);
+        socket.emit("join", { conv_id: CONV_ID });
+    });
+
+    socket.on("joined", d => console.log("JOINED room chat_" + d.conv_id));
+
+    socket.on("receive_message", data => {
+        console.log("RECEIVE", data);
+        addMessage(data.contenido, data.remitente_tipo, data.timestamp);
+    });
+
+    async function cargarMensajes() {
+        const response = await fetch(`/api/conversacion/${CONV_ID}/detalles`);
+        const data = await response.json();
+
+        chatName.textContent = `Chat con ${data.otro_nombre}`;
+        chatBox.innerHTML = '';
+
+        data.mensajes.forEach(msg => addMessage(msg.contenido, msg.remitente_tipo, msg.timestamp));
+        
+        chatBox.scrollTop = chatBox.scrollHeight;
+        if (data.proveedor_id) {
+        setupRatingWidget(data.proveedor_id);
+        }
+    }
+
+    function addMessage(text, remitente_tipo, ts=null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.classList.add('mensaje', (remitente_tipo == USER_TIPO_ACTUAL) ? 'enviado' : 'recibido');
+
+        if (!ts) {
+            const f = new Date();
+            ts = f.toLocaleDateString() + " " + f.toLocaleTimeString().slice(0,5);
+        }
+        msgDiv.innerHTML = `${text} <span class="timestamp">${ts}</span>`;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    socket.off("receive_message");
+    socket.on("receive_message", data => {
+        addMessage(data.contenido, data.remitente_tipo, data.timestamp);
+    });
+    // ... (después de la función addMessage, por ejemplo)
+
+function setupRatingWidget(proveedorId) {
+    const starsContainer = document.getElementById("stars-widget");
+    // Si el widget no existe (porque es un proveedor), no hacemos nada
+    if (!starsContainer) return; 
+
+    const stars = starsContainer.querySelectorAll("span");
+
+    // Función que envía la calificación a la API
+    const sendRating = async (puntuacion) => {
+        const commentInput = document.getElementById("rating-comment");
+        const comentario = commentInput.value.trim();
+        try {
+            const response = await fetch(`/api/calificar/${proveedorId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ puntuacion: puntuacion, comentario: comentario })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log(data.mensaje + ":", puntuacion, comentario);
+                // Marcamos visualmente la calificación enviada
+                starsContainer.classList.add("rated");
+                stars.forEach((star, index) => {
+                    // (index < puntuacion) es true para 1, 2, 3 si puntuacion es 4
+                    star.classList.toggle("active", index < puntuacion);
+                });
+            } else {
+                alert("Error al enviar calificación: " + data.error);
+            }
+        } catch (e) {
+            console.error("Error al calificar:", e);
+            alert("Error de red al calificar.");
+        }
+    };
+
+    // Añadimos el "click" a cada estrella
+    stars.forEach(star => {
+        star.addEventListener("click", () => {
+            const value = parseInt(star.dataset.value, 10);
+            sendRating(value);
+        });
+    });
+}
+
+    async function enviarMensaje(e) {
+        e.preventDefault();
+        const contenido = inputMsg.value.trim();
+        if (!contenido) return;
+
+
+        try {
+            await fetch(`/api/conversacion/${CONV_ID}/enviar`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ contenido })
+            });
+
+            inputMsg.value = "";
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    window.addEventListener('load', cargarMensajes);
+    form.addEventListener('submit', enviarMensaje);
+</script>
+
+</body>
+</html>

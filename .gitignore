@@ -1,0 +1,32 @@
+# Entorno virtual
+venv/
+.venv/
+
+# Byte-compiled / cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Base de datos local (no subir a GitHub)
+*.db
+
+# Entorno / variables privadas
+#.env
+#.env.*
+
+# Archivos temporales
+*.log
+*.sqlite
+*.sqlite3
+
+# VSCode settings (opc)
+.vscode/
+
+# Python dist/egg
+build/
+dist/
+*.egg-info/
+
+#env trae la conexion a la base de datos
+.env    
