@@ -26,7 +26,7 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         .header h2 { font-weight: 800; color: #333; }
         .header p { color: #666; font-size: 0.9em; }
@@ -38,26 +38,45 @@
             padding: 15px;
             border-radius: 10px;
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         .amount-box .label { font-size: 0.85em; text-transform: uppercase; letter-spacing: 1px; }
         .amount-box .value { font-size: 2em; font-weight: 800; }
 
-        .card-visual {
-            background: linear-gradient(135deg, #6366f1, #3b82f6);
-            color: white;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 25px;
-            position: relative;
-            overflow: hidden;
+        /* Estilos del Selector de Método */
+        .method-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
         }
-        .card-visual .chip {
-            background: #ffd700;
-            width: 40px;
-            height: 30px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+        .method-btn {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .method-btn.active {
+            border-color: #0084ff;
+            background: #ebf5ff;
+            color: #0084ff;
+        }
+        
+        .cash-info {
+            text-align: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px dashed #ccc;
+            margin-bottom: 20px;
         }
 
         .btn-pay {
@@ -72,7 +91,6 @@
             transition: all 0.3s;
         }
         .btn-pay:hover { background: #059669; transform: translateY(-2px); }
-        .btn-pay:disabled { background: #ccc; cursor: not-allowed; transform: none; }
 
         /* Spinner Overlay */
         .overlay {
@@ -81,7 +99,7 @@
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             z-index: 1000;
-            display: none; /* Oculto por defecto */
+            display: none; 
         }
         .spinner {
             width: 50px; height: 50px;
@@ -105,34 +123,60 @@
             <div class="value">${{ "{:,.0f}".format(trabajo.monto) }}</div>
         </div>
 
+        <div class="method-selector">
+            <button type="button" class="method-btn active" onclick="selectMethod('card')">
+                💳 Tarjeta
+            </button>
+            <button type="button" class="method-btn" onclick="selectMethod('cash')">
+                💵 Efectivo
+            </button>
+        </div>
+
         <form id="payment-form">
-            <div class="mb-3">
-                <label class="form-label">Número de Tarjeta</label>
-                <div class="input-group">
-                    <span class="input-group-text">💳</span>
-                    <input type="text" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19" required>
+            
+            <div id="card-section">
+                <div class="mb-3">
+                    <label class="form-label">Número de Tarjeta</label>
+                    <div class="input-group">
+                        <span class="input-group-text">💳</span>
+                        <input type="text" class="form-control card-input" placeholder="0000 0000 0000 0000" maxlength="19" required>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <label class="form-label">Vencimiento</label>
+                        <input type="text" class="form-control card-input" placeholder="MM/AA" maxlength="5" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">CVC</label>
+                        <input type="password" class="form-control card-input" placeholder="123" maxlength="3" required>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label">Titular de la tarjeta</label>
+                    <input type="text" class="form-control card-input" placeholder="Nombre como aparece en la tarjeta" required>
                 </div>
             </div>
 
-            <div class="row mb-3">
-                <div class="col-6">
-                    <label class="form-label">Vencimiento</label>
-                    <input type="text" class="form-control" placeholder="MM/AA" maxlength="5" required>
+            <div id="cash-section" style="display: none;">
+                <div class="cash-info">
+                    <h4>Pago Directo</h4>
+                    <p class="text-muted small">
+                        Has seleccionado pagar en efectivo directamente al proveedor.
+                    </p>
+                    <hr>
+                    <p class="mb-0">
+                        Al hacer clic en "Confirmar Acuerdo", el sistema registrará el trabajo como aceptado y podrás coordinar la entrega del dinero en persona.
+                    </p>
                 </div>
-                <div class="col-6">
-                    <label class="form-label">CVC</label>
-                    <input type="password" class="form-control" placeholder="123" maxlength="3" required>
-                </div>
-            </div>
-
-            <div class="mb-4">
-                <label class="form-label">Titular de la tarjeta</label>
-                <input type="text" class="form-control" placeholder="Nombre como aparece en la tarjeta" required>
             </div>
 
             <button type="submit" class="btn btn-pay" id="btn-submit">
                 Pagar ${{ "{:,.0f}".format(trabajo.monto) }}
             </button>
+            
             <div class="text-center mt-3">
                 <a href="/conversacion/{{ trabajo.conversacion_id }}" class="text-secondary text-decoration-none small">Cancelar y volver</a>
             </div>
@@ -141,63 +185,93 @@
 
     <div class="overlay" id="loading-overlay">
         <div class="spinner"></div>
-        <h4 class="mt-3 text-dark">Procesando pago...</h4>
+        <h4 class="mt-3 text-dark">Procesando...</h4>
         <p class="text-muted">No cierres esta ventana</p>
     </div>
 
     <div class="overlay" id="success-overlay">
         <div style="font-size: 60px;">✅</div>
-        <h3 class="mt-2 text-success">¡Pago Exitoso!</h3>
+        <h3 class="mt-2 text-success">¡Listo!</h3>
         <p class="text-muted">Redirigiendo al chat...</p>
     </div>
 
     <script>
-        // ID del trabajo pasado desde Flask
         const trabajoId = {{ trabajo.id }};
         const conversacionId = {{ trabajo.conversacion_id }};
+        const totalMonto = "{{ '{:,.0f}'.format(trabajo.monto) }}";
+        
+        // --- LÓGICA DE CAMBIO DE MÉTODO ---
+        function selectMethod(method) {
+            const cardSection = document.getElementById('card-section');
+            const cashSection = document.getElementById('cash-section');
+            const cardInputs = document.querySelectorAll('.card-input');
+            const btnSubmit = document.getElementById('btn-submit');
+            
+            // Botones visuales
+            const btns = document.querySelectorAll('.method-btn');
+            btns.forEach(b => b.classList.remove('active'));
 
+            if (method === 'card') {
+                // Activar Tarjeta
+                btns[0].classList.add('active');
+                cardSection.style.display = 'block';
+                cashSection.style.display = 'none';
+                btnSubmit.textContent = `Pagar $${totalMonto}`;
+                
+                // Hacer los inputs obligatorios de nuevo
+                cardInputs.forEach(input => input.setAttribute('required', 'true'));
+            } else {
+                // Activar Efectivo
+                btns[1].classList.add('active');
+                cardSection.style.display = 'none';
+                cashSection.style.display = 'block';
+                btnSubmit.textContent = `Confirmar Acuerdo`;
+                
+                // Quitar obligatoriedad a los inputs de tarjeta para poder enviar el form
+                cardInputs.forEach(input => input.removeAttribute('required'));
+            }
+        }
+
+        // --- PROCESAMIENTO DEL PAGO ---
         document.getElementById('payment-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Evitamos que el form se envíe normalmente
+            e.preventDefault();
 
-            // 1. Mostrar pantalla de carga
             document.getElementById('loading-overlay').style.display = 'flex';
 
-            // 2. Simular espera de 3 segundos (como si contactara al banco)
+            // Simulamos 2 segundos de proceso
             setTimeout(async () => {
-                
                 try {
-                    // 3. Llamar a la API real para cambiar el estado a 'PAGADO'
+                    // Llamamos a la API. Para efectos prácticos, el sistema lo marca como PAGADO
+                    // independientemente de si es efectivo o tarjeta (en efectivo se asume "Acuerdo Confirmado")
                     const response = await fetch(`/api/trabajo/pagar/${trabajoId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                     });
 
                     if (response.ok) {
-                        // 4. Mostrar éxito
                         document.getElementById('loading-overlay').style.display = 'none';
                         document.getElementById('success-overlay').style.display = 'flex';
                         
-                        // 5. Redirigir al chat después de 1.5 segundos
                         setTimeout(() => {
                             window.location.href = `/conversacion/${conversacionId}`;
                         }, 1500);
                     } else {
                         throw new Error('Error en el servidor');
                     }
-
                 } catch (error) {
-                    alert("Error procesando el pago. Intenta nuevamente.");
+                    alert("Error procesando. Intenta nuevamente.");
                     document.getElementById('loading-overlay').style.display = 'none';
                 }
-
-            }, 3000); // 3000ms = 3 segundos de espera falsa
+            }, 2000);
         });
 
-        // Script visual para formatear tarjeta (espacios cada 4 números)
+        // Formato tarjeta
         const inputCard = document.querySelector('input[placeholder="0000 0000 0000 0000"]');
-        inputCard.addEventListener('input', function (e) {
-            e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
-        });
+        if(inputCard) {
+            inputCard.addEventListener('input', function (e) {
+                e.target.value = e.target.value.replace(/[^\d]/g, '').replace(/(.{4})/g, '$1 ').trim();
+            });
+        }
     </script>
 </body>
 </html>

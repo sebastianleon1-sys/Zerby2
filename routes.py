@@ -217,6 +217,34 @@ def registrar_proveedor():
     
     return jsonify({"mensaje": "Proveedor registrado con éxito"}), 201
 
+@app.route('/api/proveedor/actualizar_perfil', methods=['POST'])
+def api_actualizar_proveedor():
+    """Permite al proveedor actualizar su dirección y teléfono."""
+    if 'user_id' not in session or session['user_type'] != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    proveedor = Proveedor.query.get(session['user_id'])
+    datos = request.json
+    
+    try:
+        if 'telefono' in datos:
+            proveedor.telefono = datos['telefono']
+    
+        if 'direccion' in datos:
+            nueva_direccion = datos['direccion']
+            if nueva_direccion != proveedor.direccion: # Solo si cambió
+                lat, lon = obtener_coordenadas(nueva_direccion)
+                proveedor.direccion = nueva_direccion
+                proveedor.lat = lat
+                proveedor.lon = lon
+            
+        db.session.commit()
+        return jsonify({"mensaje": "Perfil actualizado correctamente"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": "Error al actualizar: " + str(e)}), 500
+
 @app.route('/api/usuario/actualizar_perfil', methods=['POST'])
 def api_actualizar_usuario():
     if 'user_id' not in session or session['user_type'] != 'usuario':

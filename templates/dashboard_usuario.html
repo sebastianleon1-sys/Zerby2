@@ -3,346 +3,967 @@
 <head>
     <meta charset="UTF-8">
     <title>Zerby - Buscar Servicios</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-        nav { display: flex; justify-content: space-between; align-items: center; }
-        nav h1 { font-size: 20px; }
-        nav h1 span { font-weight: normal; }
-        
-        .search-container {
-            margin: 20px 0; display: flex; gap: 10px;
-        }
-        .search-container input {
-            flex-grow: 1; padding: 12px; font-size: 16px;
-        }
-        .search-container button {
-            padding: 12px 20px; font-size: 16px; background: #007bff; color: white; border: none; cursor: pointer;
-        }
-
-        .results-container h2 {
-            border-bottom: 2px solid #eee; padding-bottom: 10px;
-        }
-        .provider-card {
-            background: white; border: 1px solid #ddd;
-            padding: 15px; margin-bottom: 10px; border-radius: 8px;
-        }
-        .provider-card h3 {
-            margin: 0 0 5px 0; color: #007bff;
-        }
-        .provider-card .proveedor-nombre {
-            font-weight: bold; background: #eee; padding: 3px 6px; border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-        }
-        .provider-card p {
-            margin: 10px 0 0 0;
-        }
-        .provider-card .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .provider-card .badge-urgente {
-            background: #dc3545;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 10px;
-        }
-        
-    .chat-button {
-        background: #28a745; 
-        color: white;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        float: right; 
-        margin-top: -10px; 
-    }
-    .chat-button:hover {
-        background: #218838;
-    }
-
-    /* ===== NAV: que no se solapen ===== */
-    nav{
-    display:flex; justify-content:space-between; align-items:center; gap:10px;
-    flex-wrap:wrap;  /* <- permite que bajen a segunda línea en móvil */
-    }
-    nav a{
-    display:inline-flex; align-items:center; justify-content:center;
-    padding:10px 14px; border-radius:10px; text-decoration:none;
-    background: linear-gradient(135deg,#6c5ce7,#00e5a8); color:#fff; font-weight:700;
-    min-height:40px; white-space:nowrap;
-    }
-    @media (max-width:480px){
-    nav a{ width:100%; }        /* en móvil, a todo el ancho */
-    }
-
-    /* ===== Buscador: apilar en móvil ===== */
-    .search-container{
-    display:flex; gap:10px; flex-wrap:wrap;
-    }
-    .search-container input,
-    .search-container select,
-    .search-container button{
-    flex:1 1 100%;
-    height:44px; border-radius:12px;
-    }
-    .search-container button{
-    background:#4f46e5; border:none; color:#fff; font-weight:800;
-    }
-
-    /* ===== Tarjeta del proveedor ===== */
-    .provider-card{ position:relative; }
-
-    /* Cabecera de la tarjeta: oficio + badge alineados */
-    .provider-card .card-header{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    }
-
-    /* Pie de tarjeta para el botón (evita floats) */
-    .card-actions{
-    display:flex; justify-content:flex-end; margin-top:10px;
-    }
-    @media (max-width:480px){
-    .card-actions{ justify-content:center; }
-    }
-
-    /* Botón Contactar (sin float, sin margen negativo) */
-    .chat-button{
-    background:#22c55e; color:#fff; font-weight:800;
-    padding:10px 16px; border:none; border-radius:10px; cursor:pointer;
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:140px;
-    transition:.2s background, .2s transform;
-    }
-    .chat-button:hover{ background:#16a34a }
-    @media (max-width:480px){
-    .chat-button{ width:100%; }
-    }
-    .rating-display {
-        font-size: 14px;
-        color: #555;
-        margin: 5px 0 10px 0; /* Espacio entre el header y el nombre */
-    }
-    .rating-display strong {
-        color: #000;
-        font-size: 16px;
-    }
-    .rating-count {
-        color: #777;
-        margin-left: 5px;
-    }
-    .proveedor-nombre a {
-        text-decoration: none;
-        color: #333; /* O el color que prefieras */
-        font-weight: bold;
-    }
-    .proveedor-nombre a:hover {
-        text-decoration: underline;
-    }
-    
-    /* Estilo para la distancia */
-    .distancia-badge {
-        color: #198754;
-        font-weight: bold;
-        font-size: 0.9em;
-        margin-left: 10px;
-        background: #e8f5e9;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }
-    </style>
-
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #6c5ce7;
+            --secondary-color: #00e5a8;
+            --accent-color: #4f46e5;
+            --success-color: #22c55e;
+            --danger-color: #dc3545;
+            --light-color: #f8fafc;
+            --dark-color: #1e293b;
+            --gray-color: #64748b;
+            --border-radius: 16px;
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: var(--dark-color);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container-fluid {
+            max-width: 1400px;
+            padding: 20px;
+        }
+
+        /* NAVBAR MEJORADA */
+        .navbar-custom {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 15px 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .navbar-custom h1 {
+            font-size: 24px;
+            font-weight: 800;
+            margin: 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .navbar-custom h1 span {
+            color: var(--dark-color);
+            font-weight: 600;
+        }
+
+        .navbar-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .nav-btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .nav-btn-outline {
+            background-color: transparent;
+            border: 2px solid #e2e8f0;
+            color: var(--gray-color);
+        }
+
+        .nav-btn-outline:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* BUSCADOR MEJORADO */
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--shadow);
+        }
+
+        .search-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--dark-color);
+        }
+
+        .search-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .search-input-group {
+            flex: 1 1 300px;
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-color);
+            font-size: 18px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 16px 16px 16px 50px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            transition: var(--transition);
+            background-color: #f8fafc;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: white;
+            box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        }
+
+        .search-btn {
+            flex: 0 0 auto;
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 30px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-btn:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 70, 229, 0.2);
+        }
+
+        /* RESULTADOS MEJORADOS */
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .results-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin: 0;
+        }
+
+        .results-count {
+            font-size: 16px;
+            color: var(--gray-color);
+            font-weight: 500;
+        }
+
+        .btn-refresh {
+            background-color: #f1f5f9;
+            border: 2px solid #e2e8f0;
+            color: var(--dark-color);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .btn-refresh:hover {
+            background-color: #e2e8f0;
+            border-color: #cbd5e1;
+        }
+
+        /* TARJETAS DE PROVEEDOR MEJORADAS */
+        .providers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .provider-card {
+            background-color: white;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .provider-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-header {
+            padding: 20px 20px 0;
+        }
+
+        .card-tags {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .badge-profession {
+            background-color: rgba(108, 92, 231, 0.1);
+            color: var(--primary-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .badge-urgent {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: var(--danger-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .distance-badge {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-body {
+            padding: 0 20px 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .provider-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--dark-color);
+        }
+
+        .provider-name a {
+            color: inherit;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .provider-name a:hover {
+            color: var(--primary-color);
+        }
+
+        .rating-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .rating-stars {
+            color: #fbbf24;
+            font-size: 16px;
+            margin-right: 8px;
+        }
+
+        .rating-value {
+            font-weight: 700;
+            margin-right: 5px;
+        }
+
+        .rating-count {
+            color: var(--gray-color);
+            font-size: 14px;
+        }
+
+        .provider-description {
+            color: var(--gray-color);
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .provider-details {
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            margin-bottom: 10px;
+            align-items: flex-start;
+        }
+
+        .detail-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .detail-icon {
+            color: var(--primary-color);
+            width: 20px;
+            margin-right: 12px;
+            margin-top: 2px;
+        }
+
+        .detail-text {
+            color: var(--dark-color);
+            font-size: 14px;
+        }
+
+        .card-footer {
+            padding: 0 20px 20px;
+            margin-top: auto;
+        }
+
+        .btn-contact {
+            width: 100%;
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 15px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-contact:hover {
+            background-color: #16a34a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(34, 197, 94, 0.2);
+        }
+
+        /* ESTADOS VACÍOS */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .empty-icon {
+            font-size: 60px;
+            color: #cbd5e1;
+            margin-bottom: 20px;
+        }
+
+        .empty-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 10px;
+        }
+
+        .empty-text {
+            color: var(--gray-color);
+            max-width: 500px;
+            margin: 0 auto 20px;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 992px) {
+            .providers-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .navbar-custom {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                padding: 20px;
+            }
+
+            .navbar-links {
+                width: 100%;
+                flex-wrap: wrap;
+            }
+
+            .nav-btn {
+                flex: 1;
+                justify-content: center;
+                min-width: 140px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+
+            .search-input-group, .search-btn {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .search-btn {
+                justify-content: center;
+            }
+
+            .results-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .btn-refresh {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .container-fluid {
+                padding: 15px;
+            }
+
+            .navbar-custom h1 {
+                font-size: 20px;
+            }
+
+            .nav-btn {
+                padding: 10px 15px;
+                font-size: 14px;
+            }
+
+            .search-card {
+                padding: 20px;
+            }
+
+            .search-title {
+                font-size: 20px;
+            }
+
+            .providers-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .provider-card {
+                margin-bottom: 0;
+            }
+        }
+
+        /* ANIMACIONES */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.4s ease forwards;
+        }
+        /* Estilos para la navbar con logo */
+.navbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+/* Opción 1: Logo con imagen */
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.logo-img {
+    height: 40px; /* Altura base */
+    width: auto;
+    max-height: 50px; /* Altura máxima */
+    object-fit: contain;
+    transition: transform 0.3s ease;
+}
+
+.logo-img:hover {
+    transform: scale(1.05);
+}
+
+/* Opción 2: Logo con icono y texto */
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--primary-color);
+}
+
+.logo-icon {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+}
+
+.logo-text {
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Contenedor del mensaje de bienvenida */
+.welcome-container {
+    font-size: 16px;
+    color: var(--dark-color);
+    padding-left: 20px;
+    border-left: 2px solid #e2e8f0;
+}
+
+.welcome-container #welcome-msg {
+    font-weight: 600;
+}
+
+.welcome-container #welcome-msg span {
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .navbar-brand {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .welcome-container {
+        padding-left: 0;
+        border-left: none;
+        padding-top: 10px;
+        border-top: 2px solid #e2e8f0;
+        width: 100%;
+    }
+    
+    .logo-img {
+        height: 35px;
+    }
+    
+    .logo-icon {
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-img {
+        height: 30px;
+    }
+    
+    .logo-icon {
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
+    }
+    
+    .logo-text {
+        font-size: 18px;
+    }
+    
+    .welcome-container {
+        font-size: 14px;
+    }
+}
+    </style>
 </head>
 <body>
-
-    <nav>
-    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
-    <div>
-        <a id="link-mi-perfil" href="#" style="margin-right: 15px;">Mi perfil</a>
-        <a href="/bandeja_entrada" style="margin-right: 15px;">Mis Mensajes</a>
-        <a href="/api/logout">Cerrar Sesión</a>
-    </div>
-</nav>
-    <hr>
-
-    <section class="search-container">
-        <form id="form-busqueda" style="display: contents;">
-            <input type="search" id="search-query" 
-                   placeholder="Buscar por servicio, descripción o dirección..." 
-                   style="flex-grow: 2;"> 
-            <button type="submit">Buscar</button>
-        </form>
-    </section>
-
-    <section class="results-container">
-        <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
-        <button id="buscar-cercanos" class="btn btn-outline-primary btn-sm mb-3">Ver Más Cercanos a Mí</button>
-        <div id="results-list">
-            </div>
-    </section>
-
-<script>
-    function mostrarProveedores(proveedores) {
-        const resultsList = document.getElementById('results-list');
-        resultsList.innerHTML = ''; 
-
-        if (proveedores.length === 0) {
-            resultsList.innerHTML = '<p>No se encontraron proveedores para tu búsqueda.</p>';
-            return;
-        }
-
-        proveedores.forEach(p => {
-            const card = document.createElement('div');
-            card.className = 'provider-card';
-
-            // --- Lógica de Calificación ---
-            let ratingHtml = '';
-            if (p.calif_total > 0) {
-                ratingHtml = `
-                    <div class="rating-display">
-                        ⭐ <strong>${p.calif_promedio} / 7</strong> 
-                        <span class="rating-count">(${p.calif_total} calif.)</span>
-                    </div>`;
-            } else {
-                ratingHtml = `<div class="rating-display"><span class="rating-count">(Sin calificaciones aún)</span></div>`;
-            }
-
-            // --- CAMBIO: Lógica de Distancia ---
-            // Si el backend nos manda 'distancia_km', lo mostramos
-            let distanciaHtml = '';
-            if (p.distancia_km !== undefined) {
-                distanciaHtml = `<span class="distancia-badge">📍 a ${p.distancia_km} km de ti</span>`;
-            }
-
-            card.innerHTML = `
-                <div class="card-header">
-                    <h3>${p.oficio} ${distanciaHtml}</h3>
-                    ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
-                </div>
-
-                ${ratingHtml} 
-
-                <span class="proveedor-nombre">
-                    Profesional: 
-                    <a href="/perfil/proveedor/${p.proveedor_id}" target="_blank" title="Ver perfil completo">
-                        ${p.nombre}
+    <div class="container-fluid">
+        <!-- NAVBAR MEJORADA -->
+            <nav class="navbar-custom">
+                <div class="navbar-brand">
+                    <a href="/" class="logo-link">
+                        <img src="{{ url_for('static', filename='/logo_zerby_white.png') }}" 
+                            alt="Zerby Logo" 
+                            class="logo-img">
                     </a>
-                </span>
-                
-                <p>${p.descripcion || 'Sin descripción.'}</p>
-                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-                
-                <p><strong>📍 Ubicación:</strong> ${p.direccion || 'Sin dirección pública'}</p>
-                <p><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
-                <p><strong>📞 Contacto:</strong> ${p.telefono}</p>
-                
-                <div class="card-actions">
-                    <button class="chat-button" onclick="iniciarChat(${p.proveedor_id})">
-                        Contactar
-                    </button>
+                    <div class="welcome-container">
+                        <span id="welcome-msg">¡Hola, <span>cargando...</span>!</span>
+                    </div>
                 </div>
-            `;
-            resultsList.appendChild(card);
-        });
-    }
+                <div class="navbar-links">
+                    <a id="link-mi-perfil" href="#" class="nav-btn nav-btn-outline">
+                        <i class="fas fa-user"></i> Mi Perfil
+                    </a>
+                    <a href="/bandeja_entrada" class="nav-btn nav-btn-outline">
+                        <i class="fas fa-envelope"></i> Mensajes
+                    </a>
+                    <a href="/api/logout" class="nav-btn nav-btn-primary">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </a>
+                </div>
+            </nav>
 
-    window.addEventListener('load', async function() {
-        // 1. OBTENER MIS DATOS
-        try {
-            const responseProfile = await fetch('/api/get_profile');
-            if (!responseProfile.ok) throw new Error('No autorizado');
-            const datos = await responseProfile.json();
+        <!-- BUSCADOR MEJORADO -->
+        <section class="search-section">
+            <div class="search-card">
+                <h2 class="search-title">Encuentra servicios profesionales cerca de ti</h2>
+                <form id="form-busqueda" class="search-form">
+                    <div class="search-input-group">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="search" id="search-query" class="search-input" 
+                               placeholder="Buscar por servicio, descripción o dirección..." 
+                               aria-label="Buscar servicios">
+                    </div>
+                    <button type="submit" class="search-btn">
+                        <i class="fas fa-search"></i> Buscar Servicios
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- RESULTADOS MEJORADOS -->
+        <section class="results-container">
+            <div class="results-header">
+                <div>
+                    <h2 class="results-title" id="results-title">Servicios Cercanos</h2>
+                    <p class="results-count" id="results-count">Cargando servicios...</p>
+                </div>
+                <button id="buscar-cercanos" class="btn-refresh">
+                    <i class="fas fa-sync-alt"></i> Ver Más Cercanos
+                </button>
+            </div>
             
-            document.querySelector('#welcome-msg span').textContent = datos.nombre;
+            <div id="results-list" class="providers-grid">
+                <!-- Los proveedores se cargarán aquí dinámicamente -->
+            </div>
+        </section>
+    </div>
 
-            const linkPerfil = document.getElementById('link-mi-perfil');
-            if (linkPerfil) linkPerfil.href = `/perfil/usuario/${datos.id}`; 
-
-        } catch (e) {
-            window.location.href = '/login'; 
-            return;
-        }
-
-        // 2. CARGAR EL CATÁLOGO (Cercanos por defecto)
-        cargarCercanos();
-    });
-
-    // Función extraída para reutilizarla
-    async function cargarCercanos() {
-        const resultsList = document.getElementById('results-list');
-        const resultsTitle = document.getElementById('results-title');
-        resultsTitle.textContent = 'Servicios Cercanos (Sugeridos)';
-
-        try {
-            const responseCercanos = await fetch('/api/proveedores/cercanos');
-            if (!responseCercanos.ok) {
-                const errorData = await responseCercanos.json();
-                throw new Error(errorData.error || `Error ${responseCercanos.status}`);
+    <script>
+        function mostrarProveedores(proveedores) {
+            const resultsList = document.getElementById('results-list');
+            const resultsCount = document.getElementById('results-count');
+            
+            // Limpiar resultados actuales
+            resultsList.innerHTML = '';
+            
+            // Actualizar contador
+            resultsCount.textContent = `${proveedores.length} ${proveedores.length === 1 ? 'servicio encontrado' : 'servicios encontrados'}`;
+            
+            // Mostrar estado vacío si no hay resultados
+            if (proveedores.length === 0) {
+                resultsList.innerHTML = `
+                    <div class="empty-state fade-in">
+                        <div class="empty-icon">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3 class="empty-title">No se encontraron servicios</h3>
+                        <p class="empty-text">No encontramos proveedores para tu búsqueda. Intenta con otros términos o revisa los servicios cercanos a ti.</p>
+                        <button id="buscar-cercanos-2" class="btn-refresh" style="margin-top: 15px;">
+                            <i class="fas fa-map-marker-alt"></i> Ver servicios cercanos
+                        </button>
+                    </div>
+                `;
+                
+                // Agregar evento al botón de servicios cercanos en el estado vacío
+                document.getElementById('buscar-cercanos-2').addEventListener('click', function() {
+                    document.getElementById('search-query').value = '';
+                    cargarCercanos();
+                });
+                
+                return;
             }
-            const proveedores = await responseCercanos.json();
-            mostrarProveedores(proveedores);
-        } catch (e) {
-            console.error("Error al cargar proveedores cercanos:", e);
-            resultsList.innerHTML = `<p style="color: red;">No se pudo calcular la ubicación. Asegúrate de tener una dirección guardada en tu perfil.</p>`;
-        }
-    }
-
-    // --- CAMBIO: Búsqueda solo por texto ---
-    document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
-        e.preventDefault(); 
-
-        const query = document.getElementById('search-query').value;
-        const resultsTitle = document.getElementById('results-title');
-
-        if (!query) {
-            // Si busca vacío, volvemos a mostrar cercanos
-            cargarCercanos();
-            return; 
-        }
-        
-        resultsTitle.textContent = `Resultados para "${query}"`;
-        
-        try {
-            // Ya no enviamos &comuna=...
-            const response = await fetch(`/api/buscar?q=${query}`);
-            const proveedores = await response.json();
-            mostrarProveedores(proveedores);
-        } catch (e) {
-            console.error("Error en la búsqueda:", e);
-        }
-    });
-
-    // Botón para volver a ver "Cercanos" después de una búsqueda
-    document.getElementById('buscar-cercanos').addEventListener('click', function() {
-        document.getElementById('search-query').value = ''; // Limpiar buscador
-        cargarCercanos();
-    });
-
-    async function iniciarChat(proveedorId) {
-        try {
-            const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
+            
+            // Mostrar cada proveedor
+            proveedores.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'provider-card fade-in';
+                
+                // Calcular estrellas para la calificación
+                let estrellasHtml = '';
+                if (p.calif_promedio > 0) {
+                    const estrellasLlenas = Math.floor(p.calif_promedio);
+                    const tieneMediaEstrella = (p.calif_promedio - estrellasLlenas) >= 0.5;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        if (i < estrellasLlenas) {
+                            estrellasHtml += '<i class="fas fa-star"></i>';
+                        } else if (i === estrellasLlenas && tieneMediaEstrella) {
+                            estrellasHtml += '<i class="fas fa-star-half-alt"></i>';
+                        } else {
+                            estrellasHtml += '<i class="far fa-star"></i>';
+                        }
+                    }
+                } else {
+                    estrellasHtml = '<span style="color: #94a3b8;">Sin calificaciones</span>';
+                }
+                
+                // HTML para la distancia
+                let distanciaHtml = '';
+                if (p.distancia_km !== undefined) {
+                    distanciaHtml = `<span class="distance-badge"><i class="fas fa-map-marker-alt"></i> ${p.distancia_km} km</span>`;
+                }
+                
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="card-tags">
+                            <span class="badge-profession">${p.oficio}</span>
+                            ${p.atiende_urgencias ? '<span class="badge-urgent"><i class="fas fa-exclamation-circle"></i> Urgencias</span>' : ''}
+                        </div>
+                        <h3 class="provider-name">
+                            <a href="/perfil/proveedor/${p.proveedor_id}" target="_blank">
+                                ${p.nombre} ${distanciaHtml}
+                            </a>
+                        </h3>
+                    </div>
+                    
+                    <div class="card-body">
+                        <div class="rating-container">
+                            <div class="rating-stars">${estrellasHtml}</div>
+                            ${p.calif_total > 0 ? 
+                                `<span class="rating-value">${p.calif_promedio.toFixed(1)}</span>
+                                <span class="rating-count">(${p.calif_total} calificaciones)</span>` : 
+                                ''}
+                        </div>
+                        
+                        <p class="provider-description">${p.descripcion || 'El profesional no ha proporcionado una descripción.'}</p>
+                        
+                        <div class="provider-details">
+                            <div class="detail-item">
+                                <i class="fas fa-map-marker-alt detail-icon"></i>
+                                <span class="detail-text"><strong>Ubicación:</strong> ${p.direccion || 'No especificada'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-clock detail-icon"></i>
+                                <span class="detail-text"><strong>Horario:</strong> ${p.horario || 'No especificado'}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-phone detail-icon"></i>
+                                <span class="detail-text"><strong>Contacto:</strong> ${p.telefono || 'No disponible'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <button class="btn-contact" onclick="iniciarChat(${p.proveedor_id})">
+                            <i class="fas fa-comments"></i> Contactar Profesional
+                        </button>
+                    </div>
+                `;
+                
+                resultsList.appendChild(card);
             });
-            if (!response.ok) throw new Error('Error al iniciar chat');
-            const data = await response.json();
-            window.location.href = '/conversacion/' + data.conversacion_id;
-        } catch (error) {
-            console.error(error);
-            alert('No se pudo iniciar la conversación.');
         }
-    }
-</script>
 
+        // Cargar datos del usuario y proveedores al cargar la página
+        window.addEventListener('load', async function() {
+            try {
+                // Obtener datos del perfil
+                const responseProfile = await fetch('/api/get_profile');
+                if (!responseProfile.ok) throw new Error('No autorizado');
+                const datos = await responseProfile.json();
+                
+                document.querySelector('#welcome-msg span').textContent = datos.nombre;
+
+                const linkPerfil = document.getElementById('link-mi-perfil');
+                if (linkPerfil) linkPerfil.href = `/perfil/usuario/${datos.id}`;
+                
+                // Cargar proveedores cercanos
+                await cargarCercanos();
+                
+            } catch (e) {
+                console.error("Error al cargar datos:", e);
+                window.location.href = '/login';
+                return;
+            }
+        });
+
+        // Función para cargar proveedores cercanos
+        async function cargarCercanos() {
+            const resultsList = document.getElementById('results-list');
+            const resultsTitle = document.getElementById('results-title');
+            const resultsCount = document.getElementById('results-count');
+            
+            resultsTitle.textContent = 'Servicios Cercanos';
+            resultsCount.textContent = 'Cargando servicios cercanos...';
+            
+            try {
+                const responseCercanos = await fetch('/api/proveedores/cercanos');
+                if (!responseCercanos.ok) {
+                    const errorData = await responseCercanos.json();
+                    throw new Error(errorData.error || `Error ${responseCercanos.status}`);
+                }
+                const proveedores = await responseCercanos.json();
+                mostrarProveedores(proveedores);
+            } catch (e) {
+                console.error("Error al cargar proveedores cercanos:", e);
+                resultsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-map-marker-slash"></i>
+                        </div>
+                        <h3 class="empty-title">Error de ubicación</h3>
+                        <p class="empty-text">No pudimos calcular tu ubicación. Asegúrate de tener una dirección guardada en tu perfil.</p>
+                        <a href="/perfil/usuario" class="nav-btn nav-btn-primary" style="margin-top: 15px;">
+                            <i class="fas fa-user-edit"></i> Actualizar mi perfil
+                        </a>
+                    </div>
+                `;
+                resultsCount.textContent = 'Error al cargar servicios';
+            }
+        }
+
+        // Búsqueda por texto
+        document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const query = document.getElementById('search-query').value.trim();
+            const resultsTitle = document.getElementById('results-title');
+            const resultsCount = document.getElementById('results-count');
+            
+            if (!query) {
+                cargarCercanos();
+                return;
+            }
+            
+            resultsTitle.textContent = `Resultados para "${query}"`;
+            resultsCount.textContent = 'Buscando servicios...';
+            
+            try {
+                const response = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
+                const proveedores = await response.json();
+                mostrarProveedores(proveedores);
+            } catch (e) {
+                console.error("Error en la búsqueda:", e);
+                resultsCount.textContent = 'Error en la búsqueda';
+            }
+        });
+
+        // Botón para ver servicios cercanos
+        document.getElementById('buscar-cercanos').addEventListener('click', function() {
+            document.getElementById('search-query').value = '';
+            cargarCercanos();
+        });
+
+        // Función para iniciar chat
+        async function iniciarChat(proveedorId) {
+            try {
+                const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                if (!response.ok) throw new Error('Error al iniciar chat');
+                
+                const data = await response.json();
+                window.location.href = '/conversacion/' + data.conversacion_id;
+            } catch (error) {
+                console.error(error);
+                alert('No se pudo iniciar la conversación. Por favor, inténtalo de nuevo.');
+            }
+        }
+
+        // Mejora: Agregar funcionalidad de búsqueda automática mientras se escribe
+        let timeoutId;
+        document.getElementById('search-query').addEventListener('input', function() {
+            clearTimeout(timeoutId);
+            
+            const query = this.value.trim();
+            if (query.length < 3 && query.length > 0) return;
+            
+            timeoutId = setTimeout(async () => {
+                if (query.length === 0) {
+                    cargarCercanos();
+                    return;
+                }
+                
+                if (query.length >= 3) {
+                    const resultsTitle = document.getElementById('results-title');
+                    const resultsCount = document.getElementById('results-count');
+                    
+                    resultsTitle.textContent = `Buscando "${query}"...`;
+                    resultsCount.textContent = 'Buscando...';
+                    
+                    try {
+                        const response = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
+                        const proveedores = await response.json();
+                        mostrarProveedores(proveedores);
+                    } catch (e) {
+                        console.error("Error en la búsqueda automática:", e);
+                    }
+                }
+            }, 500);
+        });
+    </script>
 </body>
 </html>

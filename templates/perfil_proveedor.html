@@ -4,116 +4,479 @@
     <meta charset="UTF-8">
     <title>Zerby - Perfil de {{ proveedor_nombre }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+
+    <!-- Tipografía -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+    <!-- Tema -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+
     <style>
-        body { background: #f9f9f9; }
-        
-        .profile-container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .profile-header h1 {
-            margin: 0;
-            color: #007bff;
-        }
-        .profile-header .oficio {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-        .profile-header .rating-summary {
-            font-size: 1.2rem;
-            color: #555;
-            margin-top: 10px;
-        }
-        .profile-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        /* Portafolio */
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .portfolio-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .portfolio-item img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-        }
-        .portfolio-item p {
-            padding: 10px;
-            font-size: 14px;
-            margin: 0;
-            background: #fdfdfd;
-            text-align: center;
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f4f6f8;
+            padding-bottom: 40px;
         }
 
-        /* Calificaciones */
-        .rating-list .rating-card {
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background: #fdfdfd;
+        /* NAVBAR */
+        nav {
+            background: #ffffffff;
+            padding: 12px 20px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
         }
-        .rating-card .stars {
-            font-size: 1.2rem;
-            color: #ffc107; /* Color estrella */
-        }
-        .rating-card .comment {
-            font-style: italic;
-            margin: 5px 0;
-        }
-        .rating-card .author {
-            font-size: 14px;
-            color: #777;
-        }
+
         .navbar {
+            max-width: 1200px;
+            margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 100%;        
-            padding: 0 20px; /* ← padding izquierda y derecha */
         }
 
-        .logo img {
-            height: 40px;
+        .navbar .logo img {
+            height: 38px;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 15px;
+        .nav-links a {
+            color: white;
+            font-weight: 500;
+            text-decoration: none;
+            margin-left: 18px;
         }
 
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        .profile-container {
+            max-width: 900px;
+            margin: 30px auto;
+            background: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+        }
+
+        .profile-header h1 {
+            font-weight: 800;
+            color: #0d6efd;
+        }
+
+        .oficio {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .rating-summary {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            color: #555;
+        }
+
+        .profile-section {
+            margin-top: 35px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        /* PORTAFOLIO */
+        .portfolio-grid {
+            display: grid;
+            gap: 18px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        }
+
+        .portfolio-item {
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #e6e6e6;
+            background: #fff;
+            transition: 0.2s ease;
+        }
+
+        .portfolio-item:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .portfolio-item img {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+        }
+
+        .portfolio-item p {
+            padding: 10px;
+            background: #fafafa;
+            margin: 0;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        /* CALIFICACIONES */
+        .rating-card {
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 15px 18px;
+            border: 1px solid #eee;
+            margin-bottom: 12px;
+        }
+
+        .rating-card .stars {
+            font-size: 1.25rem;
+            color: #ffc107;
+        }
+
+        .rating-card .comment {
+            font-style: italic;
+            margin-top: 6px;
+        }
+
+        .rating-card .author {
+            color: #777;
+            font-size: 14px;
+        }
+
+        /* RESPONSIVIDAD */
+        @media (max-width: 768px) {
+            .profile-container {
+                padding: 18px;
+                margin: 15px;
+            }
+            .profile-header h1 {
+                font-size: 1.7rem;
+            }
+            .oficio {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .navbar .nav-links {
+                display: none;
+            }
+            nav {
+                text-align: center;
+            }
+            .profile-container {
+                padding: 15px;
+            }
+        }
     </style>
 </head>
-<nav>
-    <div class="navbar">
-        <a href="/" class="logo">
-            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
-        </a>
 
-        <div class="nav-links">
-            <a href="/bandeja_entrada">Mis Mensajes</a>
-            <a href="/api/logout">Cerrar Sesión</a>
+<nav class="navbar-custom">
+    <div class="navbar-brand">
+        <div class="logo-container">
+            <a href="/" class="logo-link">
+                <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" 
+                     alt="Zerby Logo" 
+                     class="logo-img"
+                     onerror="this.onerror=null; this.src='https://via.placeholder.com/120x40/6c5ce7/ffffff?text=ZERBY';">
+            </a>
+            <div class="vertical-divider"></div>
+            <div class="welcome-section">
+            </div>
+        </div>
+        <div class="navbar-links">
+            <a id="" href="/dashboard" class="nav-link">
+                <i class="fas fa-eye"></i>
+                <span class="link-text">Dashboard</span>
+            </a>
+            <a href="/bandeja_entrada" class="nav-link">
+                <i class="fas fa-inbox"></i>
+                <span class="link-text">Bandeja</span>
+            </a>
+            <a href="/api/logout" class="nav-link logout">
+                <i class="fas fa-sign-out-alt"></i>
+                <span class="link-text">Cerrar Sesión</span>
+            </a>
         </div>
     </div>
 </nav>
+
+<style>
+/* Estilos específicos para la navbar mejorada */
+.navbar-custom {
+    background: linear-gradient(135deg, #6c5ce7 0%, #4f46e5 100%);
+    padding: 0.8rem 1.5rem;
+    box-shadow: 0 4px 20px rgba(108, 92, 231, 0.25);
+    color: white;
+    position: relative;
+    z-index: 1000;
+    border-radius: 0 0 16px 16px;
+}
+
+.navbar-brand {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    flex-wrap: wrap;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.logo-link {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    height: 40px;
+}
+
+.logo-img {
+    height: 40px;
+    width: auto;
+    max-height: 50px;
+    object-fit: contain;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.logo-img:hover {
+    transform: scale(1.05);
+}
+
+.vertical-divider {
+    width: 2px;
+    height: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 1px;
+}
+
+.welcome-section {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    padding-left: 10px;
+}
+
+.welcome-section .user-name {
+    font-weight: 700;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-weight: 500;
+    text-decoration: none;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: 0.9rem;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.nav-link i {
+    font-size: 1rem;
+}
+
+.nav-link.logout {
+    background: rgba(220, 53, 69, 0.2);
+    border-color: rgba(220, 53, 69, 0.3);
+}
+
+.nav-link.logout:hover {
+    background: rgba(220, 53, 69, 0.3);
+}
+
+/* Estilos responsivos */
+@media (max-width: 992px) {
+    .navbar-brand {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .navbar-links {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .vertical-divider {
+        display: none;
+    }
+    
+    .welcome-section {
+        padding-left: 0;
+        margin-top: 5px;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar-custom {
+        padding: 0.7rem 1rem;
+    }
+    
+    .logo-link {
+        height: 35px;
+    }
+    
+    .logo-img {
+        height: 35px;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+    
+    .link-text {
+        display: none;
+    }
+    
+    .nav-link i {
+        font-size: 1.1rem;
+    }
+    
+    .nav-link {
+        padding: 0.6rem;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo-container {
+        gap: 10px;
+    }
+    
+    .logo-link {
+        height: 30px;
+    }
+    
+    .logo-img {
+        height: 30px;
+    }
+    
+    .welcome-section {
+        font-size: 0.85rem;
+    }
+    
+    .navbar-links {
+        gap: 8px;
+        justify-content: space-between;
+        width: 100%;
+    }
+    
+    .nav-link {
+        width: 36px;
+        height: 36px;
+        padding: 0.5rem;
+        flex: 1;
+        min-width: 36px;
+    }
+    
+    .nav-link i {
+        font-size: 1rem;
+    }
+}
+
+/* Estilo para el enlace del perfil cuando está oculto */
+#ver-mi-perfil-link[style*="display: none"] {
+    display: none !important;
+}
+
+#ver-mi-perfil-link {
+    transition: all 0.3s ease;
+    opacity: 1;
+}
+
+/* Tooltips para móviles cuando solo se ven iconos */
+@media (max-width: 768px) {
+    .nav-link {
+        position: relative;
+    }
+    
+    .nav-link:hover::before {
+        content: attr(data-tooltip);
+        position: absolute;
+        top: calc(100% + 5px);
+        left: 50%;
+        transform: translateX(-50%);
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        animation: fadeInTooltip 0.2s ease forwards;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    @keyframes fadeInTooltip {
+        from { opacity: 0; transform: translateX(-50%) translateY(-5px); }
+        to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    
+    .nav-link:hover::after {
+        content: '';
+        position: absolute;
+        top: calc(100% + 2px);
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent transparent rgba(0, 0, 0, 0.85) transparent;
+        z-index: 1000;
+        pointer-events: none;
+        opacity: 0;
+        animation: fadeInTooltip 0.2s ease forwards;
+    }
+    
+    .nav-link[href="/bandeja_entrada"] {
+        data-tooltip: "Bandeja de entrada";
+    }
+    
+    .nav-link.logout {
+        data-tooltip: "Cerrar sesión";
+    }
+    
+    #ver-mi-perfil-link {
+        data-tooltip: "Mi perfil público";
+    }
+}
+
+/* Asegurar que el logo siempre sea visible */
+.logo-link:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+</style>
 
 <body>
 
@@ -126,11 +489,11 @@
 
         window.addEventListener('load', async function() {
             const container = document.getElementById('profile-container');
-            
+
             try {
                 const response = await fetch(`/api/perfil/proveedor/${PROVEEDOR_ID}`);
                 if (!response.ok) throw new Error('No se pudo cargar el perfil');
-                
+
                 const data = await response.json();
                 renderProfile(container, data);
 
@@ -141,16 +504,21 @@
         });
 
         function renderProfile(container, data) {
-            // 1. Render Header (Info Básica)
-            let urgenciaBadge = data.atiende_urgencias ? '<span class="badge bg-danger">Atiende Urgencias</span>' : '';
-            let ratingSummary = `⭐ <strong>${data.calif_promedio} / 7</strong> <span style="color:#777;">(${data.calif_total} ${data.calif_total === 1 ? 'opinión' : 'opiniones'})</span>`;
-            
+            let urgenciaBadge = data.atiende_urgencias
+                ? '<span class="badge bg-danger ms-2">Urgencias 24/7</span>'
+                : '';
+
+            let ratingSummary = `⭐ <strong>${data.calif_promedio} / 5</strong> 
+                <span style="color:#777;">(${data.calif_total} ${data.calif_total === 1 ? 'opinión' : 'opiniones'})</span>`;
+
             if (data.calif_total === 0) {
-                ratingSummary = '<span style="color:#777;">(Sin opiniones aún)</span>';
+                ratingSummary = '<span style="color:#777;">Sin opiniones aún</span>';
             }
 
-            // 2. Render Portafolio
-            let portfolioHtml = '<h3>Portafolio</h3>';
+            let portfolioHtml = `
+                <h3 class="fw-bold mb-3">Portafolio</h3>
+            `;
+
             if (data.portafolio.length > 0) {
                 portfolioHtml += '<div class="portfolio-grid">';
                 data.portafolio.forEach(item => {
@@ -166,14 +534,13 @@
                 portfolioHtml += '<p>Este proveedor aún no ha subido fotos de sus trabajos.</p>';
             }
 
-            // 3. Render Calificaciones
-            let ratingsHtml = '<h3>Opiniones de Clientes</h3>';
+            let ratingsHtml = `<h3 class="fw-bold mb-3">Opiniones de Clientes</h3>`;
+
             if (data.calificaciones.length > 0) {
-                ratingsHtml += '<div class="rating-list">';
+                ratingsHtml += '<div>';
                 data.calificaciones.forEach(calif => {
-                    // Genera las N estrellas
                     const stars = '⭐'.repeat(calif.puntuacion);
-                    const emptyStars = '☆'.repeat(7 - calif.puntuacion);
+                    const emptyStars = '☆'.repeat(5 - calif.puntuacion);
 
                     ratingsHtml += `
                         <div class="rating-card">
@@ -188,15 +555,14 @@
                 ratingsHtml += '<p>Este proveedor aún no ha recibido opiniones.</p>';
             }
 
-            // 4. Ensamblar todo
             container.innerHTML = `
-                <section class="profile-header">
+                <section class="profile-header mb-3">
                     <h1>${data.nombre}</h1>
                     <p class="oficio">${data.oficio} ${urgenciaBadge}</p>
                     <p class="rating-summary">${ratingSummary}</p>
                     <hr>
                     <p>${data.descripcion || 'Sin descripción.'}</p>
-                    <p><strong>📍 Comuna:</strong> ${data.comuna || 'No especificada'}</p>
+                    <p><strong>📍 Dirección:</strong> ${data.direccion || 'No especificada'}</p>
                     <p><strong>🕒 Horario:</strong> ${data.horario || 'No especificado'}</p>
                     <p><strong>📞 Contacto:</strong> ${data.telefono}</p>
                 </section>
@@ -204,13 +570,13 @@
                 <section class="profile-section">
                     ${portfolioHtml}
                 </section>
-                
+
                 <section class="profile-section">
                     ${ratingsHtml}
                 </section>
             `;
         }
-
     </script>
+
 </body>
 </html>
