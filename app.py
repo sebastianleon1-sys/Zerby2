@@ -113,6 +113,27 @@ class Portafolio(db.Model):
     timestamp = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
     proveedor = db.relationship('Proveedor', backref=db.backref('portafolios', lazy=True, cascade="all, delete-orphan"))
 
+class Trabajo(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    conversacion_id = db.Column(db.Integer, db.ForeignKey('conversacion.id'), nullable=False)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    
+    monto = db.Column(db.Integer, nullable=False)
+    descripcion = db.Column(db.String(255), nullable=False)
+    
+
+    estado = db.Column(db.String(20), default='COTIZADO', nullable=False)
+    
+    timestamp_creacion = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    timestamp_pago = db.Column(db.DateTime, nullable=True)
+    timestamp_fin = db.Column(db.DateTime, nullable=True)
+
+  
+    usuario = db.relationship('Usuario', backref='trabajos')
+    proveedor = db.relationship('Proveedor', backref='trabajos')
+    conversacion = db.relationship('Conversacion', backref='trabajos')
+
 # --- EJECUCIÓN ---
 
 if __name__ == "__main__":

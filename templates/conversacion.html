@@ -2,312 +2,372 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Zerby - Chat</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
-        .chat-container {
-            max-width: 800px; margin: 20px auto;
-            border: 1px solid #ccc;
-            background: white;
-            display: flex; flex-direction: column;
-            height: calc(100vh - 40px);
-        }
-        .chat-header {
-            padding: 15px 20px;
-            background: #007bff; color: white;
-            border-bottom: 1px solid #ccc;
-        }
-        .chat-header h2 { margin: 0; }
-        .chat-header a { color: white; }
-        .chat-box {
-            flex-grow: 1; padding: 20px;
-            overflow-y: auto;
-            background: #f9f9f9;
-        }
-        .mensaje {
-            padding: 10px 15px;
-            border-radius: 18px;
-            margin-bottom: 10px;
-            max-width: 70%;
-            word-wrap: break-word;
-        }
-        .mensaje.recibido {
-            background: #eee;
-            align-self: flex-start;
-        }
-        .mensaje.enviado {
-            background: #007bff;
-            color: white;
-            align-self: flex-end;
-            margin-left: auto; /* Alinea a la derecha */
-        }
-        .mensaje .timestamp {
-            font-size: 11px;
-            color: #777;
-            display: block;
-            margin-top: 4px;
-        }
-        .mensaje.enviado .timestamp { color: #f1f1f1; }
-        
-        .chat-form {
-            display: flex; padding: 10px;
-            border-top: 1px solid #ccc;
-        }
-        .chat-form input {
-            flex-grow: 1; padding: 12px;
-            border: 1px solid #ccc; border-radius: 20px;
-        }
-        .chat-form button {
-            padding: 12px 20px; margin-left: 10px;
-            background: #007bff; color: white;
-            border: none; border-radius: 20px;
-            cursor: pointer;
-        }
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap; /* Para móviles */
-        }
-
-        .rating-widget { 
-            display: flex; 
-            align-items: center; 
-            gap: 5px; 
-            color: white;
-            padding-top: 5px;
-        }
-        .rating-widget .stars { display: flex; }
-        .rating-widget .stars span {
-            font-size: 1.5rem; /* Tamaño de la estrella */
-            cursor: pointer;
-            opacity: 0.3; /* Opacidad inicial */
-            transition: opacity 0.2s, transform 0.1s;
-        }
-
-        /* Al pasar el mouse sobre CUALQUIER estrella */
-        .rating-widget .stars:hover span {
-            opacity: 0.5;
-        }
-
-        /* Al pasar el mouse, iluminamos esa y las anteriores */
-        .rating-widget .stars span:hover,
-        .rating-widget .stars span:hover ~ span {
-            opacity: 0.3; /* Reseteamos las que están "después" */
-        }
-        .rating-widget .stars:hover span:hover,
-        .rating-widget .stars:hover span:hover ~ span {
-            opacity: 0.3;
-        }
-        /* Complicado selector para iluminar las estrellas PREVIAS al hover */
-        .rating-widget .stars:hover span:nth-child(1):hover ~ span { opacity: 0.3; }
-        .rating-widget .stars:hover span:nth-child(2):hover ~ span { opacity: 0.3; }
-        .rating-widget .stars:hover span:nth-child(3):hover ~ span { opacity: 0.3; }
-        .rating-widget .stars:hover span:nth-child(4):hover ~ span { opacity: 0.3; }
-        .rating-widget .stars:hover span:nth-child(5):hover ~ span { opacity: 0.3; }
-        .rating-widget .stars:hover span:nth-child(6):hover ~ span { opacity: 0.3; }
-
-        .rating-widget .stars:hover span:nth-child(1):hover { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(2):hover, .rating-widget .stars:hover span:nth-child(2):hover ~ span:nth-child(-n+1) { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(3):hover, .rating-widget .stars:hover span:nth-child(3):hover ~ span:nth-child(-n+2) { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(4):hover, .rating-widget .stars:hover span:nth-child(4):hover ~ span:nth-child(-n+3) { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(5):hover, .rating-widget .stars:hover span:nth-child(5):hover ~ span:nth-child(-n+4) { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(6):hover, .rating-widget .stars:hover span:nth-child(6):hover ~ span:nth-child(-n+5) { opacity: 1; transform: scale(1.2); }
-        .rating-widget .stars:hover span:nth-child(7):hover, .rating-widget .stars:hover span:nth-child(7):hover ~ span:nth-child(-n+6) { opacity: 1; transform: scale(1.2); }
-
-        /* Estilo para cuando ya se votó */
-        .rating-widget .stars.rated span { opacity: 0.3; }
-        .rating-widget .stars.rated span.active { opacity: 1; }
-    
-        .chat-header {
-            /* ... (tus estilos existentes) ... */
-            gap: 15px; /* Añade espacio */
-        }
-        .chat-header > div:first-child {
-            flex-grow: 1; /* Permite que el nombre y "volver" crezca */
-        }
-        .rating-widget {
-            /* ... (tus estilos existentes) ... */
-            flex-basis: 300px; /* Ancho base para el widget */
-            flex-wrap: wrap; /* Para que el input baje si no cabe */
-        }
-
-    </style>
+    <title>Chat - Zerby</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
-    <!-- Bootstrap 5 (solo CSS, sin JS) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
-    <!-- Tu tema visual (lo creamos en el paso 2) -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f0f2f5; height: 100vh; display: flex; flex-direction: column; }
+        
+        .chat-header {
+            background: white; padding: 15px; border-bottom: 1px solid #ddd;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0; /* Que el header no se aplaste */
+        }
+        .chat-container {
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px;
+        }
+        
+        /* CORRECCIÓN 1: flex-shrink: 0 evita que los mensajes se aplasten */
+        .message { 
+            max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 15px; position: relative; 
+            flex-shrink: 0; 
+        }
+        .msg-propio { align-self: flex-end; background-color: #0084ff; color: white; border-bottom-right-radius: 2px; }
+        .msg-ajeno { align-self: flex-start; background-color: #e4e6eb; color: black; border-bottom-left-radius: 2px; }
+        .timestamp { font-size: 0.7em; opacity: 0.7; margin-top: 5px; text-align: right; }
 
+        /* --- Tarjetas de Trabajo --- */
+        .job-card {
+            width: 90%; max-width: 380px; align-self: center;
+            background: white; border: 1px solid #ddd; border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+            margin: 15px 0;
+            
+            /* CORRECCIÓN 1: Evitamos el aplastamiento y permitimos altura automática */
+            flex-shrink: 0; 
+            height: auto;
+            overflow: visible; /* Dejamos visible por si acaso, aunque hidden para bordes redondeados suele estar bien */
+        }
+        .job-header {
+            background: #f8f9fa; padding: 10px 15px; border-bottom: 1px solid #eee;
+            font-weight: bold; color: #555; display: flex; justify-content: space-between;
+        }
+        .job-body { padding: 15px; text-align: center; }
+        .job-price { font-size: 1.8em; font-weight: 800; color: #333; margin: 10px 0; }
+        .job-desc { color: #666; font-size: 0.95em; margin-bottom: 15px; }
+        .job-status { font-size: 0.85em; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; display: block;}
+        
+        .status-cotizado { color: #f59e0b; } 
+        .status-pagado { color: #10b981; }   
+        .status-finalizado { color: #3b82f6; }
 
+        /* Estilos de calificación */
+        .rating-box {
+            background: #fdfdfd; border: 1px solid #eee; padding: 10px; border-radius: 8px; margin-top: 10px;
+        }
+        .stars {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 10px;
+        }
+        .star {
+            font-size: 32px; /* Más grandes */
+            cursor: pointer; color: #e0e0e0; transition: transform 0.2s, color 0.2s;
+        }
+        .star:hover { transform: scale(1.2); }
+        .star.active, .star:hover { color: #ffc107; }
+
+        /* Input Area */
+        .input-area {
+            background: white; padding: 15px; border-top: 1px solid #ddd;
+            display: flex; gap: 10px; align-items: center;
+            flex-shrink: 0; /* Que el input no se aplaste */
+        }
+        .input-area input {
+            flex-grow: 1; padding: 12px; border-radius: 20px; border: 1px solid #ccc; outline: none;
+        }
+        .btn-send {
+            background: #0084ff; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold;
+        }
+        .btn-cotizar {
+            background: #6f42c1; color: white; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; font-size: 0.9em;
+            display: flex; align-items: center; gap: 5px;
+        }
+    </style>
 </head>
 <body>
 
-    <div class="chat-container">
-        <div class="chat-header">
-        <div>
-            <a href="/bandeja_entrada" style="float:left; margin-right: 15px;">&larr; Volver</a>
-            <h2 id="chat-with-name">Cargando...</h2>
-        </div>
-
-        {% if user_tipo_actual == 'usuario' %}
-        <div class="rating-widget">
-            <span>Calificar (1-7):</span>
-            <div class="stars" id="stars-widget">
-                <span data-value="1">⭐</span>
-                <span data-value="2">⭐</span>
-                <span data-value="3">⭐</span>
-                <span data-value="4">⭐</span>
-                <span data-value="5">⭐</span>
-                <span data-value="6">⭐</span>
-                <span data-value="7">⭐</span>
-            </div>
-            <input type="text" id="rating-comment" placeholder="Deja un comentario (opcional)" style="width: 100%; margin-top: 5px; padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-size: 12px; color: #333;">
-        </div>
-        {% endif %}
-        </div>
-        
-        <div class="chat-box" id="chat-box">
-            </div>
-
-        <form class="chat-form" id="form-enviar">
-            <input type="text" id="input-mensaje" placeholder="Escribe un mensaje..." autocomplete="off">
-            <button type="submit">Enviar</button>
-        </form>
+    <div class="chat-header">
+        <h5 id="chat-title">Cargando...</h5>
+        <a href="/dashboard" class="btn btn-outline-secondary btn-sm">Volver</a>
     </div>
 
-<!-- Socket.IO -->
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <div class="chat-container" id="chat-box"></div>
 
+    <div class="input-area">
+        {% if user_tipo_actual == 'proveedor' %}
+        <button class="btn-cotizar" data-bs-toggle="modal" data-bs-target="#modalCotizar">
+            💲 Cotizar
+        </button>
+        {% endif %}
+        <input type="text" id="msg-input" placeholder="Escribe un mensaje...">
+        <button class="btn-send" id="btn-send">Enviar</button>
+    </div>
+
+    <div class="modal fade" id="modalCotizar" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header"><h5 class="modal-title">Generar Cotización</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+                <div class="modal-body">
+                    <form id="form-cotizar">
+                        <div class="mb-3"><label>Descripción</label><input type="text" id="cot-desc" class="form-control" required></div>
+                        <div class="mb-3"><label>Monto ($)</label><input type="number" id="cot-monto" class="form-control" required></div>
+                        <button type="submit" class="btn btn-primary w-100">Enviar</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-    const CONV_ID = {{ conv_id|tojson }};
-    const USER_TIPO_ACTUAL = {{ user_tipo_actual|tojson }};
+        const CONV_ID = {{ conv_id }};
+        const USER_TYPE = "{{ user_tipo_actual }}"; 
+        let PROVEEDOR_ID_DESTINO = null; 
 
-    const chatBox = document.getElementById('chat-box');
-    const chatName = document.getElementById('chat-with-name');
-    const form = document.getElementById('form-enviar');
-    const inputMsg = document.getElementById('input-mensaje');
+        const socket = io(); 
+        const chatBox = document.getElementById('chat-box');
 
-    const socket = io("/", { transports: ['websocket'] });
-
-    socket.on("connect", () => {
-        console.log("Conectado al servidor de sockets", socket.id);
-        socket.emit("join", { conv_id: CONV_ID });
-    });
-
-    socket.on("joined", d => console.log("JOINED room chat_" + d.conv_id));
-
-    socket.on("receive_message", data => {
-        console.log("RECEIVE", data);
-        addMessage(data.contenido, data.remitente_tipo, data.timestamp);
-    });
-
-    async function cargarMensajes() {
-        const response = await fetch(`/api/conversacion/${CONV_ID}/detalles`);
-        const data = await response.json();
-
-        chatName.textContent = `Chat con ${data.otro_nombre}`;
-        chatBox.innerHTML = '';
-
-        data.mensajes.forEach(msg => addMessage(msg.contenido, msg.remitente_tipo, msg.timestamp));
-        
-        chatBox.scrollTop = chatBox.scrollHeight;
-        if (data.proveedor_id) {
-        setupRatingWidget(data.proveedor_id);
-        }
-    }
-
-    function addMessage(text, remitente_tipo, ts=null) {
-        const msgDiv = document.createElement('div');
-        msgDiv.classList.add('mensaje', (remitente_tipo == USER_TIPO_ACTUAL) ? 'enviado' : 'recibido');
-
-        if (!ts) {
-            const f = new Date();
-            ts = f.toLocaleDateString() + " " + f.toLocaleTimeString().slice(0,5);
-        }
-        msgDiv.innerHTML = `${text} <span class="timestamp">${ts}</span>`;
-        chatBox.appendChild(msgDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
-    }
-
-    socket.off("receive_message");
-    socket.on("receive_message", data => {
-        addMessage(data.contenido, data.remitente_tipo, data.timestamp);
-    });
-    // ... (después de la función addMessage, por ejemplo)
-
-function setupRatingWidget(proveedorId) {
-    const starsContainer = document.getElementById("stars-widget");
-    // Si el widget no existe (porque es un proveedor), no hacemos nada
-    if (!starsContainer) return; 
-
-    const stars = starsContainer.querySelectorAll("span");
-
-    // Función que envía la calificación a la API
-    const sendRating = async (puntuacion) => {
-        const commentInput = document.getElementById("rating-comment");
-        const comentario = commentInput.value.trim();
-        try {
-            const response = await fetch(`/api/calificar/${proveedorId}`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ puntuacion: puntuacion, comentario: comentario })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                console.log(data.mensaje + ":", puntuacion, comentario);
-                // Marcamos visualmente la calificación enviada
-                starsContainer.classList.add("rated");
-                stars.forEach((star, index) => {
-                    // (index < puntuacion) es true para 1, 2, 3 si puntuacion es 4
-                    star.classList.toggle("active", index < puntuacion);
-                });
-            } else {
-                alert("Error al enviar calificación: " + data.error);
-            }
-        } catch (e) {
-            console.error("Error al calificar:", e);
-            alert("Error de red al calificar.");
-        }
-    };
-
-    // Añadimos el "click" a cada estrella
-    stars.forEach(star => {
-        star.addEventListener("click", () => {
-            const value = parseInt(star.dataset.value, 10);
-            sendRating(value);
+        window.addEventListener('load', async () => {
+            socket.emit('join', { conv_id: CONV_ID });
+            await cargarHistorial();
         });
-    });
-}
 
-    async function enviarMensaje(e) {
-        e.preventDefault();
-        const contenido = inputMsg.value.trim();
-        if (!contenido) return;
+        async function cargarHistorial() {
+            const res = await fetch(`/api/conversacion/${CONV_ID}/detalles`);
+            const data = await res.json();
+            
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
 
+            document.getElementById('chat-title').textContent = data.otro_nombre;
+            if (data.proveedor_id) PROVEEDOR_ID_DESTINO = data.proveedor_id;
 
-        try {
-            await fetch(`/api/conversacion/${CONV_ID}/enviar`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ contenido })
+            data.historial.forEach(item => {
+                if (item.tipo === 'sistema_trabajo') {
+                    appendJobCard(item);
+                } else {
+                    appendMessage(item.contenido, item.remitente_tipo, item.timestamp);
+                }
             });
-
-            inputMsg.value = "";
-        } catch (e) {
-            console.error(e);
+            scrollToBottom();
         }
-    }
 
-    window.addEventListener('load', cargarMensajes);
-    form.addEventListener('submit', enviarMensaje);
-</script>
+        socket.on('receive_message', (data) => {
+            console.log("Evento:", data);
+            if (data.tipo === 'sistema_trabajo') {
+                appendJobCard(data);
+            } else {
+                appendMessage(data.contenido, data.remitente_tipo, data.timestamp);
+                scrollToBottom();
+            }
+        });
 
+        function appendMessage(contenido, tipo, timestamp) {
+            const div = document.createElement('div');
+            const esMio = (tipo === USER_TYPE);
+            div.className = `message ${esMio ? 'msg-propio' : 'msg-ajeno'}`;
+            div.innerHTML = `${contenido}<div class="timestamp">${timestamp}</div>`;
+            chatBox.appendChild(div);
+        }
+
+        // --- FUNCIÓN CORREGIDA PARA EVITAR TARJETAS DUPLICADAS ---
+        function appendJobCard(data) {
+            // 1. Verificamos si la tarjeta YA existe en el DOM
+            const existingCard = document.getElementById(`trabajo-${data.trabajo_id}`);
+            
+            // Si existe, usamos esa misma. Si no, creamos una nueva.
+            const div = existingCard || document.createElement('div');
+            
+            if (!existingCard) {
+                div.className = 'job-card';
+                div.id = `trabajo-${data.trabajo_id}`;
+                // IMPORTANTE: Evitar aplastamiento visual
+                div.style.flexShrink = "0"; 
+            }
+
+            let statusText = '', statusClass = '', actionHtml = '';
+
+            // Lógica de Estados
+            const estado = data.estado || 'COTIZADO'; 
+            const subtipo = data.subtipo || 'cotizacion';
+
+            const esCotizado = (estado === 'COTIZADO');
+            const esPagado = (estado === 'PAGADO') || (subtipo === 'pago_confirmado');
+            const esFinalizado = (estado === 'FINALIZADO') || (subtipo === 'trabajo_finalizado');
+
+            if (esCotizado) {
+                statusText = '⏳ Pendiente de Pago';
+                statusClass = 'status-cotizado';
+                if (USER_TYPE === 'usuario') {
+                    actionHtml = `<a href="/pago/${data.trabajo_id}" class="btn btn-success w-100">💳 Pagar Ahora</a>`;
+                } else {
+                    actionHtml = `<button class="btn btn-secondary w-100" disabled>Esperando pago...</button>`;
+                }
+            
+            } else if (esPagado) { 
+                statusText = '✅ Pagado - En Progreso';
+                statusClass = 'status-pagado';
+                if (USER_TYPE === 'proveedor') {
+                    actionHtml = `<button class="btn btn-primary w-100" onclick="terminarTrabajo(${data.trabajo_id})">🏁 Terminar Trabajo</button>`;
+                } else {
+                    actionHtml = `<div class="alert alert-success p-2 small">Pago recibido. Trabajando...</div>`;
+                }
+            
+            } else if (esFinalizado) {
+                statusText = '🏁 Finalizado';
+                statusClass = 'status-finalizado';
+                if (USER_TYPE === 'usuario') {
+                    const uniqueId = data.trabajo_id; // Usamos ID estable para evitar conflictos
+                    actionHtml = `
+                        <div class="rating-box">
+                            <p class="mb-2 fw-bold text-primary">¡Trabajo terminado!</p>
+                            <p class="small text-muted text-center mb-1">Califica tu experiencia:</p>
+                            <div class="stars" id="stars-${uniqueId}">
+                                <span class="star" data-value="1">★</span>
+                                <span class="star" data-value="2">★</span>
+                                <span class="star" data-value="3">★</span>
+                                <span class="star" data-value="4">★</span>
+                                <span class="star" data-value="5">★</span>
+                            </div>
+                            <textarea id="comment-${uniqueId}" class="rating-comment" rows="2" placeholder="Comentario (opcional)"></textarea>
+                            <button class="btn btn-outline-primary btn-sm w-100 mt-2" onclick="enviarCalificacion(${uniqueId})">Enviar Calificación</button>
+                        </div>
+                    `;
+                    // Pequeño timeout para asegurar que el DOM cargó antes de añadir listeners
+                    setTimeout(() => activarEstrellas(uniqueId), 100);
+                } else {
+                    actionHtml = `<div class="alert alert-info p-2 small">Trabajo completado.</div>`;
+                }
+            }
+
+            // Datos visuales
+            const precioRaw = data.monto || 0;
+            const precioFmt = new Intl.NumberFormat('es-CL').format(precioRaw);
+            const descripcion = data.descripcion || data.mensaje || "Detalle del servicio";
+
+            // Reemplazamos el contenido HTML (sea nueva o existente)
+            div.innerHTML = `
+                <div class="job-header"><span>Solicitud</span><span>#${data.trabajo_id || '?'}</span></div>
+                <div class="job-body">
+                    <span class="job-status ${statusClass}">${statusText}</span>
+                    <div class="job-price">$${precioFmt}</div>
+                    <p class="job-desc">${descripcion}</p>
+                    ${actionHtml}
+                </div>
+            `;
+
+            // Si es nueva, la agregamos al chat y hacemos scroll
+            if (!existingCard) {
+                chatBox.appendChild(div);
+                scrollToBottom();
+            } else {
+                // Si ya existía, NO hacemos scroll forzado para no molestar al usuario
+                // Solo parpadeamos visualmente (opcional)
+                div.style.transition = "background-color 0.5s";
+                div.style.backgroundColor = "#fffbcc"; // Amarillo suave
+                setTimeout(() => div.style.backgroundColor = "white", 500);
+            }
+        }
+
+        // --- LÓGICA DE ESTRELLAS (CORREGIDA PARA 5) ---
+        let ratingSeleccionado = 0;
+        
+        function activarEstrellas(id) {
+            const container = document.getElementById(`stars-${id}`);
+            if(!container) return; // Si ya se calificó y el HTML cambió, salimos
+            
+            const stars = container.querySelectorAll('.star');
+            stars.forEach(star => {
+                star.onclick = function() {
+                    ratingSeleccionado = this.getAttribute('data-value');
+                    stars.forEach(s => {
+                        s.classList.remove('active');
+                        // Lógica simple: Si valor de estrella <= seleccionado, activar
+                        if (parseInt(s.getAttribute('data-value')) <= parseInt(ratingSeleccionado)) {
+                            s.classList.add('active');
+                        }
+                    });
+                };
+            });
+        }
+
+        async function enviarCalificacion(id) {
+            if (ratingSeleccionado === 0) return alert("Por favor selecciona al menos 1 estrella.");
+            
+            const comentarioInput = document.getElementById(`comment-${id}`);
+            const comentario = comentarioInput ? comentarioInput.value : "";
+            
+            if (!PROVEEDOR_ID_DESTINO) return alert("Error interno: ID Proveedor desconocido. Recarga la página.");
+
+            try {
+                const res = await fetch(`/api/calificar/${PROVEEDOR_ID_DESTINO}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        puntuacion: parseInt(ratingSeleccionado), 
+                        comentario: comentario 
+                    })
+                });
+                
+                if (res.ok) {
+                    alert("¡Gracias por tu calificación!");
+                    // Reemplazar formulario por mensaje de éxito
+                    const box = document.getElementById(`stars-${id}`).closest('.rating-box');
+                    if(box) box.innerHTML = `<div class="alert alert-success text-center m-0">✅ Calificación enviada con éxito</div>`;
+                } else {
+                    const err = await res.json();
+                    alert(err.error);
+                }
+            } catch(e) { 
+                console.error(e); 
+                alert("Error de conexión al calificar.");
+            }
+        }
+
+        // --- (Resto de funciones: enviarTexto, formCotizar, terminarTrabajo igual que antes) ---
+        document.getElementById('btn-send').addEventListener('click', enviarTexto);
+        document.getElementById('msg-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') enviarTexto();
+        });
+
+        async function enviarTexto() {
+            const input = document.getElementById('msg-input');
+            const texto = input.value.trim();
+            if(!texto) return;
+            await fetch(`/api/conversacion/${CONV_ID}/enviar`, {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ contenido: texto })
+            });
+            input.value = '';
+        }
+
+        const formCotizar = document.getElementById('form-cotizar');
+        if (formCotizar) {
+            formCotizar.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                bootstrap.Modal.getInstance(document.getElementById('modalCotizar')).hide();
+                await fetch('/api/trabajo/crear', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        conversacion_id: CONV_ID,
+                        monto: document.getElementById('cot-monto').value,
+                        descripcion: document.getElementById('cot-desc').value
+                    })
+                });
+                document.getElementById('cot-desc').value = '';
+                document.getElementById('cot-monto').value = '';
+            });
+        }
+
+        async function terminarTrabajo(id) {
+            if(confirm("¿Finalizar trabajo?")) await fetch(`/api/trabajo/terminar/${id}`, { method: 'POST' });
+        }
+
+        function scrollToBottom() { chatBox.scrollTop = chatBox.scrollHeight; }
+    </script>
 </body>
 </html>

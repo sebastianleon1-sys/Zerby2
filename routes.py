@@ -11,7 +11,7 @@ from geopy.geocoders import Nominatim
 from haversine import haversine, Unit
 
 # Importamos la instancia de app, db, socketio y los modelos
-from app import app, db, socketio, Usuario, Proveedor, Conversacion, Mensaje, Calificacion, Portafolio
+from app import app, db, socketio, Usuario, Proveedor, Conversacion, Mensaje, Calificacion, Portafolio, Trabajo
 
 # --- FUNCIONES HELPER ---
 
@@ -403,25 +403,69 @@ def api_get_conversaciones():
              lista_convos.append({"id": conv.id, "otro_participante": nombre, "detalle": "Cliente"})
     return jsonify(lista_convos)
 
+# En routes.py
+
 @app.route('/api/conversacion/<int:conv_id>/detalles')
 def api_get_detalles_conv(conv_id):
     if 'user_id' not in session: return jsonify({"error": "No autorizado"}), 401
+    
     conv = Conversacion.query.get_or_404(conv_id)
     user_id = session['user_id']
     user_type = session['user_type']
+    
+    # Verificación de seguridad
     if (user_type == 'usuario' and conv.usuario_id != user_id) or \
        (user_type == 'proveedor' and conv.proveedor_id != user_id):
         return jsonify({"error": "No autorizado"}), 403
+
     otro_nombre = conv.proveedor.nombre_completo if user_type == 'usuario' else conv.usuario.nombre_completo
-    mensajes_db = Mensaje.query.filter_by(conversacion_id=conv_id).order_by(Mensaje.timestamp.asc()).all()
-    mensajes_json = [{
-        "contenido": msg.contenido,
-        "remitente_tipo": msg.remitente_tipo,
-        "timestamp": msg.timestamp.strftime("%d/%m %H:%M") 
-    } for msg in mensajes_db]
+    
+    lista_historial = []
+
+    # 1. Obtener MENSAJES de texto
+    mensajes_db = Mensaje.query.filter_by(conversacion_id=conv_id).all()
+    for msg in mensajes_db:
+        lista_historial.append({
+            "tipo": "mensaje",
+            "contenido": msg.contenido,
+            "remitente_tipo": msg.remitente_tipo,
+            "timestamp_dt": msg.timestamp,
+            "timestamp": msg.timestamp.strftime("%d/%m %H:%M") 
+        })
+
+    # 2. Obtener TRABAJOS (Cotizaciones) - AQUÍ ESTABA EL ERROR
+    trabajos_db = Trabajo.query.filter_by(conversacion_id=conv_id).all()
+    
+    for job in trabajos_db:
+        # Definimos el subtipo para que el JS sepa qué color usar
+        subtipo = "cotizacion"
+        if job.estado == 'PAGADO': subtipo = "pago_confirmado"
+        elif job.estado == 'FINALIZADO': subtipo = "trabajo_finalizado"
+
+        lista_historial.append({
+            "tipo": "sistema_trabajo",
+            "trabajo_id": job.id,
+            "estado": job.estado,
+            "subtipo": subtipo,
+            # --- DATOS CLAVE QUE FALTABAN ---
+            "monto": job.monto,          
+            "descripcion": job.descripcion,
+            "mensaje": job.descripcion, # Fallback
+            # -------------------------------
+            "timestamp_dt": job.timestamp_creacion,
+            "timestamp": job.timestamp_creacion.strftime("%d/%m %H:%M")
+        })
+
+    # 3. Ordenar por fecha (mezclando mensajes y trabajos)
+    lista_historial.sort(key=lambda x: x['timestamp_dt'])
+
+    # 4. Limpieza final (borrar el objeto datetime que no es serializable)
+    for item in lista_historial:
+        del item['timestamp_dt']
+    
     return jsonify({
         "otro_nombre": otro_nombre,
-        "mensajes": mensajes_json,
+        "historial": lista_historial,
         "proveedor_id": conv.proveedor_id if user_type == 'usuario' else None
     })
 
@@ -463,8 +507,10 @@ def api_calificar(proveedor_id):
     puntuacion = datos.get('puntuacion')
     comentario = datos.get('comentario', '').strip() 
     usuario_id = session['user_id']
-    if not isinstance(puntuacion, int) or not (1 <= puntuacion <= 7):
-        return jsonify({"error": "Puntuación debe ser un número entero entre 1 y 7"}), 400
+
+    # CORRECCIÓN: Cambiado de 7 a 5
+    if not isinstance(puntuacion, int) or not (1 <= puntuacion <= 5):
+        return jsonify({"error": "Puntuación debe ser un número entero entre 1 y 5"}), 400
     proveedor = Proveedor.query.get(proveedor_id)
     if not proveedor: return jsonify({"error": "Proveedor no encontrado"}), 404
     calificacion_existente = Calificacion.query.filter_by(usuario_id=usuario_id, proveedor_id=proveedor_id).first()
@@ -534,6 +580,145 @@ def api_get_perfil_proveedor(proveedor_id):
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in {'png', 'jpg', 'jpeg', 'gif'}
 
+@app.route('/api/trabajo/crear', methods=['POST'])
+def api_crear_trabajo():
+    """El PROVEEDOR crea una cotización."""
+    if 'user_id' not in session or session['user_type'] != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    datos = request.json
+    conv_id = datos.get('conversacion_id')
+    monto = datos.get('monto')
+    descripcion = datos.get('descripcion')
+
+    if not conv_id or not monto or not descripcion:
+        return jsonify({"error": "Faltan datos"}), 400
+
+    # Verificamos que la conversación sea de este proveedor
+    conv = Conversacion.query.get_or_404(conv_id)
+    if conv.proveedor_id != session['user_id']:
+        return jsonify({"error": "No autorizado"}), 403
+
+    try:
+        nuevo_trabajo = Trabajo(
+            conversacion_id=conv_id,
+            proveedor_id=session['user_id'],
+            usuario_id=conv.usuario_id,
+            monto=monto,
+            descripcion=descripcion,
+            estado='COTIZADO'
+        )
+        db.session.add(nuevo_trabajo)
+        db.session.commit()
+
+        # Notificar al chat en tiempo real
+        payload = {
+            "tipo": "sistema_trabajo",
+            "subtipo": "cotizacion",
+            "trabajo_id": nuevo_trabajo.id,
+            "monto": monto,
+            "descripcion": descripcion,
+            "estado": "COTIZADO",
+            "mensaje": f"Se ha generado una cotización por ${monto}"
+        }
+        socketio.emit("receive_message", payload, room=f"chat_{conv_id}")
+
+        return jsonify({"mensaje": "Cotización enviada", "trabajo_id": nuevo_trabajo.id}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/pago/<int:trabajo_id>')
+def pagina_pago(trabajo_id):
+    """Renderiza la vista de pago falso."""
+    if 'user_id' not in session: return redirect(url_for('login_page'))
+    
+    trabajo = Trabajo.query.get_or_404(trabajo_id)
+    
+    # Seguridad: Solo el dueño del trabajo (cliente) puede ver la pagina de pago
+    if session['user_type'] == 'usuario' and trabajo.usuario_id != session['user_id']:
+         return abort(403)
+
+    return render_template('pago.html', trabajo=trabajo)
+
+
+@app.route('/api/trabajo/pagar/<int:trabajo_id>', methods=['POST'])
+def api_pagar_trabajo(trabajo_id):
+    """El CLIENTE paga la cotización (cambia estado a PAGADO)."""
+    if 'user_id' not in session or session['user_type'] != 'usuario':
+        return jsonify({"error": "No autorizado"}), 401
+
+    trabajo = Trabajo.query.get_or_404(trabajo_id)
+    
+    if trabajo.usuario_id != session['user_id']:
+        return jsonify({"error": "No autorizado"}), 403
+
+    if trabajo.estado != 'COTIZADO':
+        return jsonify({"error": "Este trabajo ya fue pagado o finalizado"}), 400
+
+    try:
+        trabajo.estado = 'PAGADO'
+        trabajo.timestamp_pago = datetime.now(timezone.utc)
+        db.session.commit()
+
+        # CORRECCIÓN: Enviamos monto y descripción para que el frontend no muestre $0
+        payload = {
+            "tipo": "sistema_trabajo",
+            "subtipo": "pago_confirmado",
+            "trabajo_id": trabajo.id,
+            "monto": trabajo.monto,            # <--- AGREGADO
+            "descripcion": trabajo.descripcion, # <--- AGREGADO
+            "estado": "PAGADO",
+            "mensaje": "¡Pago confirmado! El proveedor puede comenzar el trabajo."
+        }
+        socketio.emit("receive_message", payload, room=f"chat_{trabajo.conversacion_id}")
+
+        return jsonify({"mensaje": "Pago exitoso"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/trabajo/terminar/<int:trabajo_id>', methods=['POST'])
+def api_terminar_trabajo(trabajo_id):
+    """El PROVEEDOR marca el trabajo como finalizado."""
+    if 'user_id' not in session or session['user_type'] != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+
+    trabajo = Trabajo.query.get_or_404(trabajo_id)
+    
+    if trabajo.proveedor_id != session['user_id']:
+        return jsonify({"error": "No autorizado"}), 403
+
+    if trabajo.estado != 'PAGADO':
+         return jsonify({"error": "El trabajo debe estar pagado para finalizarlo"}), 400
+
+    try:
+        trabajo.estado = 'FINALIZADO'
+        trabajo.timestamp_fin = datetime.now(timezone.utc)
+        db.session.commit()
+
+        # CORRECCIÓN: Enviamos monto y descripción
+        payload = {
+            "tipo": "sistema_trabajo",
+            "subtipo": "trabajo_finalizado",
+            "trabajo_id": trabajo.id,
+            "monto": trabajo.monto,            # <--- AGREGADO
+            "descripcion": trabajo.descripcion, # <--- AGREGADO
+            "estado": "FINALIZADO",
+            "mensaje": "Trabajo finalizado. ¡Por favor califica el servicio!"
+        }
+        socketio.emit("receive_message", payload, room=f"chat_{trabajo.conversacion_id}")
+
+        return jsonify({"mensaje": "Trabajo finalizado"}), 200
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/api/portafolio/add', methods=['POST'])
 def api_add_portafolio():
     if 'user_id' not in session or session['user_type'] != 'proveedor':
