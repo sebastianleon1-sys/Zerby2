@@ -1,3 +1,17 @@
+## Ejecutar: 
+```
+pip install -r requirements.txt
+py reset_db.py
+```
+Luego:
+
+```
+py create_schema.py
+```
+Y para correr aplicación:
+```
+py app.py
+```
 **(03/12) SE ACTUALIZÓ LA MAIN BRANCH** 
 ===============
 ## Cambios: 
