@@ -19,7 +19,7 @@
 <main class="auth-main">
     <section class="auth-card auth-card-wide">
         <div class="auth-logo-wrapper">
-            <img src="{{ url_for('static', filename='logo_zerby.png') }}" alt="Zerby Logo" class="auth-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_inverted.png') }}" alt="Zerby Logo" class="auth-logo">
         </div>
 
         <h2 class="auth-title">Soy proveedor (ofrezco un servicio)</h2>
@@ -151,7 +151,7 @@
                 <div id="horario-panel" class="horario-panel">
                     <!-- Lunes -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-lun" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-lun" name="dias[]" class="form-check-input me-2">
                         <label for="dia-lun" class="me-2 mb-0">Lunes</label>
                         <input type="time" id="inicio-lun" class="form-control form-control-sm me-1" value="09:00">
                         <span class="mx-1">a</span>
@@ -160,7 +160,7 @@
 
                     <!-- Martes -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-mar" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-mar" name="dias[]" class="form-check-input me-2">
                         <label for="dia-mar" class="me-2 mb-0">Martes</label>
                         <input type="time" id="inicio-mar" class="form-control form-control-sm me-1" value="09:00">
                         <span class="mx-1">a</span>
@@ -169,7 +169,7 @@
 
                     <!-- Miércoles -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-mie" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-mie" name="dias[]" class="form-check-input me-2">
                         <label for="dia-mie" class="me-2 mb-0">Miércoles</label>
                         <input type="time" id="inicio-mie" class="form-control form-control-sm me-1" value="09:00">
                         <span class="mx-1">a</span>
@@ -178,7 +178,7 @@
 
                     <!-- Jueves -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-jue" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-jue" name="dias[]" class="form-check-input me-2">
                         <label for="dia-jue" class="me-2 mb-0">Jueves</label>
                         <input type="time" id="inicio-jue" class="form-control form-control-sm me-1" value="09:00">
                         <span class="mx-1">a</span>
@@ -187,7 +187,7 @@
 
                     <!-- Viernes -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-vie" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-vie" name="dias[]" class="form-check-input me-2">
                         <label for="dia-vie" class="me-2 mb-0">Viernes</label>
                         <input type="time" id="inicio-vie" class="form-control form-control-sm me-1" value="09:00">
                         <span class="mx-1">a</span>
@@ -196,7 +196,7 @@
 
                     <!-- Sábado -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-sab" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-sab" name="dias[]" class="form-check-input me-2">
                         <label for="dia-sab" class="me-2 mb-0">Sábado</label>
                         <input type="time" id="inicio-sab" class="form-control form-control-sm me-1" value="10:00">
                         <span class="mx-1">a</span>
@@ -205,7 +205,7 @@
 
                     <!-- Domingo -->
                     <div class="horario-row">
-                        <input type="checkbox" id="dia-dom" class="form-check-input me-2">
+                        <input type="checkbox" id="dia-dom" name="dias[]" class="form-check-input me-2">
                         <label for="dia-dom" class="me-2 mb-0">Domingo</label>
                         <input type="time" id="inicio-dom" class="form-control form-control-sm me-1">
                         <span class="mx-1">a</span>
@@ -216,13 +216,14 @@
                         Marca los días que trabajas y tus horarios. Esto se mostrará en tu perfil.
                     </small>
                 </div>
+
             </div>
 
             <!-- Campo oculto donde guardaremos el texto final -->
             <input type="hidden" name="horario" id="horario">
 
             <div class="mb-3">
-                <div class="form-check d-flex align-items-center gap-2">
+                <div class="form-check d-flex align-items-center gap-2 urgencias-row">
                     <input type="checkbox" name="atiende_urgencias" id="check-urgencias" class="form-check-input">
                     <label for="check-urgencias" class="form-check-label">
                         ¿Atiendes urgencias?
