@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Mis Solicitudes de Servicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap + tema -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-body">
+
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+            
+        </a>
+        <div class="app-nav-links">
+            <a href="/dashboard">Buscar servicios</a>
+            <a href="/mis_solicitudes" class="primary">Mis solicitudes</a>
+            <a href="/bandeja_entrada">Mensajes</a>
+            <a href="/api/logout">Cerrar sesión</a>
+        </div>
+    </div>
+</header>
+
+<main class="app-main">
+    <section class="app-card mb-4">
+        <div class="app-card-header">
+            <div>
+                <div class="app-card-title">Mis solicitudes de servicio</div>
+                <div class="app-card-subtitle">
+                    Revisa el estado de tus solicitudes y accede al chat con tu proveedor.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="solicitudes-container" class="list-stack">
+        <p class="text-muted-soft">Cargando solicitudes...</p>
+    </section>
+</main>
+
+<script>
+    async function cargarSolicitudes() {
+        const cont = document.getElementById("solicitudes-container");
+        cont.innerHTML = "<p class='text-muted-soft'>Cargando solicitudes...</p>";
+
+        try {
+            const resp = await fetch("/api/solicitudes/usuario");
+            if (!resp.ok) throw new Error("Respuesta no OK del servidor");
+
+            const solicitudes = await resp.json();
+            if (!Array.isArray(solicitudes) || !solicitudes.length) {
+                cont.innerHTML = "<p class='text-muted-soft'>No has enviado solicitudes aún.</p>";
+                return;
+            }
+
+            cont.innerHTML = "";
+
+            solicitudes.forEach(s => {
+                const card = document.createElement("div");
+                card.className = "solicitud-card";
+
+                const mostrarPin = (s.estado === "pagado" || s.estado === "completado") && s.pin_codigo;
+                const puedeIrAlChat = ["aceptada", "pagado", "completado"].includes(s.estado);
+
+                card.innerHTML = `
+                    <div class="solicitud-header">
+                        <div>
+                            <div><strong>Fecha:</strong> ${s.fecha}</div>
+                            <div><strong>Hora:</strong> ${s.hora_inicio} a ${s.hora_fin}</div>
+                            <div><strong>Proveedor:</strong> ${s.proveedor}</div>
+                        </div>
+                        <div class="solicitud-estado ${s.estado}">
+                            ${s.estado.toUpperCase()}
+                        </div>
+                    </div>
+                    <p class="mb-1">${s.descripcion || ""}</p>
+                    ${
+                        s.estado === "aceptada"
+                            ? `<a href="/pago/${s.id}" class="btn btn-success w-100 mt-2">
+                                    Ir a pagar
+                               </a>`
+                            : ""
+                    }
+                    ${
+                        puedeIrAlChat
+                            ? `<button class="btn btn-primary w-100 mt-2" onclick="abrirChat(${s.proveedor_id})">
+                                    Ir al chat con el proveedor
+                               </button>`
+                            : ""
+                    }
+                    ${
+                        mostrarPin
+                            ? `<p class="mt-2 mb-0">
+                                    <strong>Código de verificación:</strong>
+                                    <span class="pin-code">
+                                        ${s.pin_codigo}
+                                    </span>
+                               </p>`
+                            : ""
+                    }
+                `;
+
+                cont.appendChild(card);
+            });
+
+        } catch (e) {
+            console.error(e);
+            cont.innerHTML = "<p class='text-error-soft'>Error al cargar tus solicitudes.</p>";
+        }
+    }
+
+    async function abrirChat(proveedorId) {
+        try {
+            const resp = await fetch(`/api/iniciar_chat/${proveedorId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok) {
+                alert(data.error || "No se pudo iniciar el chat.");
+                return;
+            }
+
+            if (data.conversacion_id) {
+                window.location.href = `/conversacion/${data.conversacion_id}`;
+            } else {
+                alert("No se recibió ID de conversación.");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión al abrir el chat.");
+        }
+    }
+
+    cargarSolicitudes();
+    setInterval(cargarSolicitudes, 10000);
+</script>
+
+</body>
+</html>

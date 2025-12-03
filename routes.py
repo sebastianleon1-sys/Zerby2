@@ -5,13 +5,39 @@ from flask_socketio import emit, join_room
 import os
 import time
 from werkzeug.utils import secure_filename
+import random
 
 # --- IMPORTACIONES NUEVAS PARA GEOLOCALIZACIÓN ---
 from geopy.geocoders import Nominatim
 from haversine import haversine, Unit
 
+geolocator = Nominatim(user_agent="zerby_app_v2_client_autocomplete")
+
 # Importamos la instancia de app, db, socketio y los modelos
-from app import app, db, socketio, Usuario, Proveedor, Conversacion, Mensaje, Calificacion, Portafolio
+from app import app, db, socketio, Usuario, Proveedor, Conversacion, Mensaje, Calificacion, Portafolio, SolicitudServicio
+
+
+def get_or_create_conversacion(usuario_id, proveedor_id):
+    """
+    Devuelve una conversación existente entre usuario y proveedor,
+    o la crea si no existe.
+    """
+    conv = Conversacion.query.filter_by(
+        usuario_id=usuario_id,
+        proveedor_id=proveedor_id
+    ).first()
+
+    if conv:
+        return conv
+
+    conv = Conversacion(
+        usuario_id=usuario_id,
+        proveedor_id=proveedor_id
+    )
+    db.session.add(conv)
+    db.session.commit()
+    return conv
+
 
 # --- FUNCIONES HELPER ---
 
@@ -24,7 +50,6 @@ def obtener_coordenadas(direccion):
         return None, None
     
     # Es importante poner un user_agent único para no ser bloqueado por Nominatim
-    geolocator = Nominatim(user_agent="zerby_app_v2_client")
     try:
         # Añadimos ", Chile" para acotar la búsqueda
         location = geolocator.geocode(direccion + ", Chile", timeout=10)
@@ -34,6 +59,42 @@ def obtener_coordenadas(direccion):
         print(f"Error obteniendo coordenadas: {e}")
     
     return None, None
+
+@app.route('/api/geocode/search')
+def api_geocode_search():
+    """
+    Devuelve sugerencias de direcciones usando Nominatim (OpenStreetMap).
+    Recibe: ?q=texto
+    Responde: lista de { display_name, lat, lon }
+    """
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify([])
+
+    try:
+        # limit=5 para no abusar del servicio
+        locations = geolocator.geocode(
+            query + ", Chile",
+            exactly_one=False,
+            limit=5,
+            addressdetails=True,
+            timeout=10
+        )
+    except Exception as e:
+        print(f"Error en api_geocode_search: {e}")
+        return jsonify([])
+
+    results = []
+    if locations:
+        for loc in locations:
+            results.append({
+                "display_name": loc.address,
+                "lat": loc.latitude,
+                "lon": loc.longitude
+            })
+
+    return jsonify(results)
+
 
 def _get_base_query_proveedores_con_calif():
     """Consulta base para obtener proveedores con su promedio de notas."""
@@ -52,24 +113,52 @@ def _get_base_query_proveedores_con_calif():
     )
 
 def _serializar_proveedor(p, promedio, total, distancia_km=None):
-    """Convierte objeto Proveedor a JSON, incluyendo distancia si existe."""
+    """Convierte objeto Proveedor a JSON, incluyendo distancia e imagen de portada si existe."""
+
+    imagen_portada = None
+    try:
+        # p.portafolios es la relación definida en el modelo Portafolio
+        # Nos aseguramos de que exista y tenga al menos un elemento
+        if hasattr(p, "portafolios"):
+            lista = list(p.portafolios)  # forzamos a lista por si es InstrumentedList
+            if lista:
+                # Puedes elegir: primero o más reciente
+                # 1) Primero:
+                # imagen_portada = lista[0].imagen_url
+
+                # 2) Más reciente por timestamp (recomendado):
+                ultimo_trabajo = max(
+                    lista,
+                    key=lambda x: x.timestamp or datetime.min
+                )
+                imagen_portada = ultimo_trabajo.imagen_url
+
+    except Exception as e:
+        print(f"[WARN] Error calculando imagen_portada para proveedor {p.id}: {e}")
+        imagen_portada = None
+
     data = {
         "proveedor_id": p.id,
         "nombre": p.nombre_completo,
         "oficio": p.oficio,
         "descripcion": p.descripcion,
         "telefono": p.telefono,
-        "direccion": p.direccion, # Usamos direccion, no comuna
+        "direccion": p.direccion,  # Usamos direccion, no comuna
         "horario": p.horario,
         "atiende_urgencias": p.atiende_urgencias,
         "calif_promedio": round(float(promedio), 1) if promedio else 0,
         "calif_total": int(total) if total else 0,
         "lat": p.lat,
-        "lon": p.lon
+        "lon": p.lon,
+        "imagen_portada": imagen_portada,
     }
+
     if distancia_km is not None:
         data["distancia_km"] = round(distancia_km, 2)
+
     return data
+
+
 
 # --- RUTAS DE PÁGINAS ---
 
@@ -167,8 +256,22 @@ def registrar_usuario():
 
     # 1. Calcular Coordenadas
     lat, lon = None, None
-    if 'direccion' in datos and datos['direccion']:
+
+    # Si el front envía lat/lon, las usamos directamente
+    lat_str = datos.get('lat')
+    lon_str = datos.get('lon')
+
+    if lat_str and lon_str:
+        try:
+            lat = float(lat_str)
+            lon = float(lon_str)
+        except ValueError:
+            lat, lon = None, None
+
+    # Si no llegaron o son inválidas, usamos geocodificación por dirección como antes
+    if (lat is None or lon is None) and datos.get('direccion'):
         lat, lon = obtener_coordenadas(datos['direccion'])
+
 
     nuevo_usuario = Usuario(
         nombre_completo=datos['nombre_completo'],
@@ -194,8 +297,22 @@ def registrar_proveedor():
 
     # 1. Calcular Coordenadas
     lat, lon = None, None
-    if 'direccion' in datos and datos['direccion']:
+
+    # Si el front envía lat/lon (desde el autocomplete), las usamos directo
+    lat_str = datos.get('lat')
+    lon_str = datos.get('lon')
+
+    if lat_str and lon_str:
+        try:
+            lat = float(lat_str)
+            lon = float(lon_str)
+        except ValueError:
+            lat, lon = None, None
+
+    # Si no llegaron o son inválidas, usamos geocodificación por dirección como antes
+    if (lat is None or lon is None) and datos.get('direccion'):
         lat, lon = obtener_coordenadas(datos['direccion'])
+
 
     nuevo_proveedor = Proveedor(
         nombre_completo=datos['nombre_completo'],
@@ -257,53 +374,84 @@ def api_proveedores_cercanos():
     2. Obtener todos los proveedores.
     3. Calcular distancia Haversine con cada uno.
     4. Ordenar y devolver los más cercanos.
+    Si algo falla, devolvemos igualmente una lista simple de proveedores sin distancia.
     """
     if 'user_id' not in session or session['user_type'] != 'usuario':
         return jsonify({"error": "No autorizado"}), 401
 
     try:
         usuario = Usuario.query.get(session['user_id'])
-        
-        # Caso A: El usuario no tiene ubicación
-        if not usuario.lat or not usuario.lon:
-            # Devolvemos lista simple sin orden geográfico
-            base_query = _get_base_query_proveedores_con_calif().limit(10).all()
-            resultados = []
-            for p, prom, total in base_query:
-                resultados.append(_serializar_proveedor(p, prom, total, distancia_km=None))
-            return jsonify(resultados)
+        if not usuario:
+            raise ValueError("Usuario no encontrado en la base de datos")
 
-        # Caso B: Usuario con ubicación -> Calcular distancias
-        user_coords = (usuario.lat, usuario.lon)
+        # === CASO A: Usuario SIN coordenadas -> devolvemos lista simple ===
+        if usuario.lat is None or usuario.lon is None:
+            print("[INFO] Usuario sin lat/lon, devolviendo lista simple de proveedores.")
+            base_query = _get_base_query_proveedores_con_calif().limit(20).all()
+            resultados = [
+                _serializar_proveedor(p, prom, total, distancia_km=None)
+                for p, prom, total in base_query
+            ]
+            return jsonify(resultados), 200
+
+        # === CASO B: Usuario CON coordenadas -> calculamos distancias ===
+        try:
+            user_coords = (float(usuario.lat), float(usuario.lon))
+        except Exception as e:
+            print(f"[WARN] Lat/Lon de usuario inválidas: {usuario.lat}, {usuario.lon} -> {e}")
+            # fallback a lista simple
+            base_query = _get_base_query_proveedores_con_calif().limit(20).all()
+            resultados = [
+                _serializar_proveedor(p, prom, total, distancia_km=None)
+                for p, prom, total in base_query
+            ]
+            return jsonify(resultados), 200
+
         todos_proveedores = _get_base_query_proveedores_con_calif().all()
-        
+
         lista_con_distancia = []
         for p, prom, total in todos_proveedores:
-            # Solo calculamos si el proveedor también tiene coordenadas
-            if p.lat and p.lon:
-                prov_coords = (p.lat, p.lon)
-                distancia = haversine(user_coords, prov_coords) # Devuelve KM por defecto
+            try:
+                if p.lat is None or p.lon is None:
+                    continue
+                prov_coords = (float(p.lat), float(p.lon))
+                distancia = haversine(user_coords, prov_coords)  # KM por defecto
                 lista_con_distancia.append({
-                    "obj": p, "prom": prom, "total": total, "dist": distancia
+                    "obj": p,
+                    "prom": prom,
+                    "total": total,
+                    "dist": distancia
                 })
-        
-        # Ordenamos por distancia (menor a mayor)
+            except Exception as e:
+                print(f"[WARN] Error calculando distancia para proveedor {p.id}: {e}")
+                # Lo saltamos, pero no rompemos todo el endpoint
+                continue
+
+        # Ordenamos por distancia
         lista_con_distancia.sort(key=lambda x: x['dist'])
-        
+
         # Tomamos los 20 más cercanos
         top_cercanos = lista_con_distancia[:20]
-        
-        json_response = []
-        for item in top_cercanos:
-            json_response.append(_serializar_proveedor(
-                item['obj'], item['prom'], item['total'], item['dist']
-            ))
-            
-        return jsonify(json_response)
+
+        json_response = [
+            _serializar_proveedor(item['obj'], item['prom'], item['total'], item['dist'])
+            for item in top_cercanos
+        ]
+        return jsonify(json_response), 200
 
     except Exception as e:
-        print(f"!!! ERROR en /api/proveedores/cercanos: {e}") 
-        return jsonify({"error": str(e)}), 500
+        # FALLBACK GLOBAL: si algo muy raro pasa, igual devolvemos proveedores sin distancia
+        print(f"!!! ERROR en /api/proveedores/cercanos (usando fallback): {e}")
+        try:
+            base_query = _get_base_query_proveedores_con_calif().limit(20).all()
+            resultados = [
+                _serializar_proveedor(p, prom, total, distancia_km=None)
+                for p, prom, total in base_query
+            ]
+            return jsonify(resultados), 200
+        except Exception as e2:
+            print(f"!!! ERROR también en fallback de /api/proveedores/cercanos: {e2}")
+            return jsonify({"error": "Error interno al obtener proveedores"}), 500
 
 
 @app.route('/api/buscar')
@@ -347,25 +495,30 @@ def api_iniciar_chat(proveedor_id):
 
     cliente_id = session['user_id']
 
-    conversacion_existente = Conversacion.query.filter_by(
-        usuario_id=cliente_id,
-        proveedor_id=proveedor_id
+    # ✅ Verificar que haya al menos una solicitud aceptada/pagada/completada
+    estados_permitidos = ("aceptada", "pagado", "completado")
+
+    tiene_solicitud_valida = SolicitudServicio.query.filter(
+        SolicitudServicio.usuario_id == cliente_id,
+        SolicitudServicio.proveedor_id == proveedor_id,
+        SolicitudServicio.estado.in_(estados_permitidos)
     ).first()
 
-    if conversacion_existente:
-        return jsonify({"mensaje": "Conversación existente", "conversacion_id": conversacion_existente.id}), 200
-    else:
-        try:
-            nueva_conversacion = Conversacion(
-                usuario_id=cliente_id,
-                proveedor_id=proveedor_id
-            )
-            db.session.add(nueva_conversacion)
-            db.session.commit()
-            return jsonify({"mensaje": "Conversación iniciada", "conversacion_id": nueva_conversacion.id}), 201
-        except Exception as e:
-            db.session.rollback()
-            return jsonify({"error": str(e)}), 500
+    if not tiene_solicitud_valida:
+        return jsonify({
+            "error": "El chat solo se habilita cuando el proveedor acepta tu solicitud."
+        }), 403
+
+    try:
+        conv = get_or_create_conversacion(cliente_id, proveedor_id)
+        return jsonify({
+            "mensaje": "Conversación habilitada",
+            "conversacion_id": conv.id
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route('/bandeja_entrada')
 def bandeja_entrada():
@@ -484,6 +637,195 @@ def api_calificar(proveedor_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/proveedores/<int:proveedor_id>/solicitudes', methods=['POST'])
+def api_crear_solicitud(proveedor_id):
+    # Solo usuarios tipo "usuario" pueden enviar solicitudes
+    if 'user_id' not in session or session.get('user_type') != 'usuario':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    datos = request.json or {}
+    usuario_id = session['user_id']
+
+    try:
+        fecha_str = datos.get('fecha')
+        hora_ini_str = datos.get('hora_inicio')
+        hora_fin_str = datos.get('hora_fin')
+        descripcion = datos.get('descripcion', '').strip()
+
+        if not (fecha_str and hora_ini_str and hora_fin_str):
+            return jsonify({"error": "Faltan campos obligatorios"}), 400
+        
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+        hora_inicio = datetime.strptime(hora_ini_str, "%H:%M").time()
+        hora_fin = datetime.strptime(hora_fin_str, "%H:%M").time()
+
+        if hora_fin <= hora_inicio:
+            return jsonify({"error": "La hora de término debe ser mayor a la de inicio"}), 400
+
+        proveedor = Proveedor.query.get(proveedor_id)
+        if not proveedor:
+            return jsonify({"error": "Proveedor no encontrado"}), 404
+
+        # 1) Crear solicitud (queda en estado "pendiente")
+        solicitud = SolicitudServicio(
+            usuario_id=usuario_id,
+            proveedor_id=proveedor_id,
+            fecha=fecha,
+            hora_inicio=hora_inicio,
+            hora_fin=hora_fin,
+            descripcion=descripcion,
+            estado="pendiente"
+        )
+        db.session.add(solicitud)
+        db.session.commit()
+
+        # ❌ YA NO CREAMOS CONVERSACIÓN AQUÍ
+        return jsonify({
+            "mensaje": "Solicitud enviada",
+            "solicitud_id": solicitud.id
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error creando solicitud:", e)
+        return jsonify({"error": "Error al crear la solicitud"}), 500
+
+@app.route('/api/solicitudes/proveedor')
+def api_solicitudes_proveedor():
+    if 'user_id' not in session or session.get('user_type') != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    proveedor_id = session['user_id']
+
+    # Traemos solicitudes ordenadas por fecha de creación (más nuevas primero)
+    solicitudes = (db.session.query(SolicitudServicio, Usuario.nombre_completo)
+                   .join(Usuario, SolicitudServicio.usuario_id == Usuario.id)
+                   .filter(SolicitudServicio.proveedor_id == proveedor_id)
+                   .order_by(SolicitudServicio.creado_en.desc())
+                   .limit(5)
+                   .all())
+
+    results = []
+    for s, nombre_usuario in solicitudes:
+        results.append({
+            "id": s.id,
+            "cliente": nombre_usuario,
+            "fecha": s.fecha.isoformat(),
+            "hora_inicio": s.hora_inicio.strftime("%H:%M"),
+            "hora_fin": s.hora_fin.strftime("%H:%M"),
+            "descripcion": s.descripcion,
+            "estado": s.estado,
+            "creado_en": s.creado_en.strftime("%Y-%m-%d %H:%M"),
+            "pin_codigo": s.pin_codigo  # <- NUEVO
+        })
+    
+    return jsonify(results)
+
+
+@app.route('/api/solicitudes/<int:solicitud_id>/estado', methods=['POST'])
+def api_actualizar_estado_solicitud(solicitud_id):
+    if 'user_id' not in session or session.get('user_type') != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    proveedor_id = session['user_id']
+    datos = request.json or {}
+    nuevo_estado = datos.get('estado')
+
+    if nuevo_estado not in ("aceptada", "rechazada"):
+        return jsonify({"error": "Estado inválido"}), 400
+
+    sol = SolicitudServicio.query.get_or_404(solicitud_id)
+    if sol.proveedor_id != proveedor_id:
+        return jsonify({"error": "No autorizado"}), 403
+    
+    try:
+        sol.estado = nuevo_estado
+        db.session.commit()
+
+        respuesta = {"mensaje": "Estado actualizado"}
+
+        # 👇 solo si se acepta, creamos/recuperamos el chat
+        if nuevo_estado == "aceptada":
+            conv = get_or_create_conversacion(sol.usuario_id, sol.proveedor_id)
+            respuesta["conversacion_id"] = conv.id
+
+        return jsonify(respuesta), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error actualizando estado:", e)
+        return jsonify({"error": "Error al actualizar la solicitud"}), 500
+
+
+
+@app.route('/api/solicitudes/<int:solicitud_id>/confirmar_pin', methods=['POST'])
+def api_confirmar_pin(solicitud_id):
+    if 'user_id' not in session or session.get('user_type') != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+
+    proveedor_id = session['user_id']
+    datos = request.json or {}
+    pin_enviado = str(datos.get('pin', '')).strip()
+
+    sol = SolicitudServicio.query.get_or_404(solicitud_id)
+
+    if sol.proveedor_id != proveedor_id:
+        return jsonify({"error": "No autorizado"}), 403
+
+    if sol.estado != "pagado":
+        return jsonify({"error": "La solicitud no está en estado pagado"}), 400
+
+    if not sol.pin_codigo:
+        return jsonify({"error": "La solicitud no tiene PIN asociado"}), 400
+
+    if pin_enviado != sol.pin_codigo:
+        return jsonify({"error": "PIN incorrecto"}), 400
+
+    try:
+        sol.estado = "completado"
+        sol.confirmado_en = datetime.now(timezone.utc)
+        db.session.commit()
+        return jsonify({"mensaje": "Servicio confirmado correctamente"}), 200
+    except Exception as e:
+        db.session.rollback()
+        print("Error confirmando PIN:", e)
+        return jsonify({"error": "Error al confirmar el servicio"}), 500
+
+
+@app.route('/api/solicitudes/<int:solicitud_id>/confirmar_servicio', methods=['POST'])
+def api_confirmar_servicio(solicitud_id):
+    if 'user_id' not in session or session.get('user_type') != 'proveedor':
+        return jsonify({"error": "No autorizado"}), 401
+
+    proveedor_id = session['user_id']
+    datos = request.json or {}
+    pin = (datos.get("pin") or "").strip()
+
+    sol = SolicitudServicio.query.get_or_404(solicitud_id)
+
+    if sol.proveedor_id != proveedor_id:
+        return jsonify({"error": "No autorizado"}), 403
+
+    if sol.estado != "pagado":
+        return jsonify({"error": "La solicitud no está pagada"}), 400
+
+    if not sol.pin_codigo:
+        return jsonify({"error": "Esta solicitud no tiene PIN asignado"}), 400
+
+    if pin != sol.pin_codigo:
+        return jsonify({"error": "Código incorrecto"}), 400
+
+    try:
+        sol.estado = "completado"
+        sol.confirmado_en = datetime.now(timezone.utc)
+        db.session.commit()
+        return jsonify({"mensaje": "Servicio confirmado"}), 200
+    except Exception as e:
+        db.session.rollback()
+        print("Error al confirmar servicio:", e)
+        return jsonify({"error": "Error al confirmar servicio"}), 500
+
+
 @app.route('/perfil/usuario/<int:user_id>')
 def perfil_usuario(user_id):
     usuario = Usuario.query.get_or_404(user_id)
@@ -588,6 +930,107 @@ def api_delete_portafolio(item_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+    
+
+@app.route('/solicitudes')
+def vista_solicitudes_proveedor():
+    if 'user_id' not in session or session.get('user_type') != 'proveedor':
+        return redirect(url_for('login_page'))
+    return render_template('solicitudes_proveedor.html')
+
+
+@app.route('/pago/<int:solicitud_id>')
+def vista_pago(solicitud_id):
+    if 'user_id' not in session or session.get('user_type') != 'usuario':
+        return redirect(url_for('login_page'))
+
+    solicitud = SolicitudServicio.query.get_or_404(solicitud_id)
+
+    # Verificar propiedad
+    if solicitud.usuario_id != session['user_id']:
+        return abort(403)
+
+    # Solo solicitudes aceptadas pueden pagarse
+    if solicitud.estado != "aceptada":
+        return abort(403)
+
+    return render_template("pago.html", solicitud=solicitud)
+
+@app.route('/api/pago/<int:solicitud_id>', methods=['POST'])
+def api_pago_realizado(solicitud_id):
+    if 'user_id' not in session or session.get('user_type') != 'usuario':
+        return jsonify({"error": "No autorizado"}), 401
+
+    solicitud = SolicitudServicio.query.get_or_404(solicitud_id)
+
+    if solicitud.usuario_id != session['user_id']:
+        return jsonify({"error": "No autorizado"}), 403
+
+    if solicitud.estado != "aceptada":
+        return jsonify({"error": "La solicitud no está en estado aceptada"}), 400
+
+    try:
+        # marcar como pagado
+        solicitud.estado = "pagado"
+
+        # generar PIN de 6 dígitos si no existe
+        if not solicitud.pin_codigo:
+            solicitud.pin_codigo = f"{random.randint(0, 999999):06d}"
+
+        db.session.commit()
+        return jsonify({
+            "mensaje": "Pago confirmado",
+            "pin": solicitud.pin_codigo
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print("Error al registrar pago:", e)
+        return jsonify({"error": "Error al registrar pago"}), 500
+
+
+@app.route('/api/solicitudes/usuario')
+def api_solicitudes_usuario():
+    if 'user_id' not in session or session.get('user_type') != 'usuario':
+        return jsonify({"error": "No autorizado"}), 401
+    
+    usuario_id = session['user_id']
+
+    solicitudes = (
+        db.session.query(SolicitudServicio, Proveedor.nombre_completo)
+        .join(Proveedor, SolicitudServicio.proveedor_id == Proveedor.id)
+        .filter(SolicitudServicio.usuario_id == usuario_id)
+        .order_by(SolicitudServicio.creado_en.desc())
+        .all()
+    )
+
+    results = []
+    for s, proveedor_nombre in solicitudes:
+        results.append({
+            "id": s.id,
+            "proveedor": proveedor_nombre,
+            "proveedor_id": s.proveedor_id,   # 👈 NUEVO
+            "fecha": s.fecha.isoformat(),
+            "hora_inicio": s.hora_inicio.strftime("%H:%M"),
+            "hora_fin": s.hora_fin.strftime("%H:%M"),
+            "descripcion": s.descripcion,
+            "estado": s.estado,
+            "creado_en": s.creado_en.strftime("%Y-%m-%d %H:%M"),
+            "pin_codigo": s.pin_codigo
+        })
+    
+    return jsonify(results), 200
+
+
+
+
+@app.route('/mis_solicitudes')
+def mis_solicitudes():
+    if 'user_id' not in session or session.get('user_type') != 'usuario':
+        return redirect(url_for('login_page'))
+    
+    return render_template('solicitudes_usuario.html')
+
 
 # --- SOCKET.IO HANDLERS ---
 

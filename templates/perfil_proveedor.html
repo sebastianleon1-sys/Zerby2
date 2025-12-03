@@ -4,213 +4,236 @@
     <meta charset="UTF-8">
     <title>Zerby - Perfil de {{ proveedor_nombre }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <!-- Bootstrap + tema -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body { background: #f9f9f9; }
-        
-        .profile-container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .profile-header h1 {
-            margin: 0;
-            color: #007bff;
-        }
-        .profile-header .oficio {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-        }
-        .profile-header .rating-summary {
-            font-size: 1.2rem;
-            color: #555;
-            margin-top: 10px;
-        }
-        .profile-section {
-            margin-top: 30px;
-            border-top: 1px solid #eee;
-            padding-top: 20px;
-        }
-        
-        /* Portafolio */
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        .portfolio-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .portfolio-item img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            display: block;
-        }
-        .portfolio-item p {
-            padding: 10px;
-            font-size: 14px;
-            margin: 0;
-            background: #fdfdfd;
-            text-align: center;
-        }
-
-        /* Calificaciones */
-        .rating-list .rating-card {
-            border: 1px solid #eee;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            background: #fdfdfd;
-        }
-        .rating-card .stars {
-            font-size: 1.2rem;
-            color: #ffc107; /* Color estrella */
-        }
-        .rating-card .comment {
-            font-style: italic;
-            margin: 5px 0;
-        }
-        .rating-card .author {
-            font-size: 14px;
-            color: #777;
-        }
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;        
-            padding: 0 20px; /* ← padding izquierda y derecha */
-        }
-
-        .logo img {
-            height: 40px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 15px;
-        }
-
-    </style>
 </head>
-<nav>
-    <div class="navbar">
-        <a href="/" class="logo">
-            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
-        </a>
 
-        <div class="nav-links">
-            <a href="/bandeja_entrada">Mis Mensajes</a>
-            <a href="/api/logout">Cerrar Sesión</a>
+<body class="app-body">
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+            
+        </a>
+        <div class="app-nav-links">
+            <a href="/bandeja_entrada">Mis mensajes</a>
+            <a href="/api/logout" class="primary">Cerrar sesión</a>
         </div>
     </div>
-</nav>
+</header>
 
-<body>
+<main class="app-main">
+    <div class="profile-layout" id="top">
+        <!-- Columna izquierda: perfil completo -->
+        <div class="profile-container" id="profile-container">
+            <p class="text-muted-soft">Cargando perfil del proveedor...</p>
+        </div>
 
-    <div class="profile-container" id="profile-container">
-        <p>Cargando perfil del proveedor...</p>
+        <!-- Columna derecha: panel de agenda -->
+        <aside class="agenda-panel" id="agenda-panel">
+            <h3 class="agenda-title">Agendar servicio</h3>
+            <p id="agenda-horario-referencia" class="agenda-horario-ref text-muted-soft"></p>
+
+            <form id="form-agenda" class="agenda-form">
+                <div class="mb-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" class="form-control" id="agenda-fecha" name="fecha" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hora de inicio</label>
+                    <input type="time" class="form-control" id="agenda-hora-inicio" name="hora_inicio" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Hora de término</label>
+                    <input type="time" class="form-control" id="agenda-hora-fin" name="hora_fin" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Describe tu necesidad</label>
+                    <textarea
+                        class="form-control"
+                        id="agenda-descripcion"
+                        name="descripcion"
+                        rows="4"
+                        placeholder="Ej: Fuga en lavamanos del baño principal, necesito que lo revisen esta tarde.">
+                    </textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    Enviar solicitud
+                </button>
+
+                <div id="agenda-msg" class="agenda-msg"></div>
+            </form>
+        </aside>
     </div>
+</main>
 
-    <script>
-        const PROVEEDOR_ID = {{ proveedor_id|tojson }};
+<script>
+    const PROVEEDOR_ID = {{ proveedor_id|tojson }};
+    let proveedorData = null;
 
-        window.addEventListener('load', async function() {
-            const container = document.getElementById('profile-container');
-            
-            try {
-                const response = await fetch(`/api/perfil/proveedor/${PROVEEDOR_ID}`);
-                if (!response.ok) throw new Error('No se pudo cargar el perfil');
-                
-                const data = await response.json();
-                renderProfile(container, data);
+    // Cargar perfil
+    window.addEventListener('load', async function() {
+        const container = document.getElementById('profile-container');
 
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '<p>Error al cargar el perfil. Es posible que el proveedor no exista.</p>';
-            }
-        });
+        try {
+            const response = await fetch(`/api/perfil/proveedor/${PROVEEDOR_ID}`);
+            if (!response.ok) throw new Error('No se pudo cargar el perfil');
 
-        function renderProfile(container, data) {
-            // 1. Render Header (Info Básica)
-            let urgenciaBadge = data.atiende_urgencias ? '<span class="badge bg-danger">Atiende Urgencias</span>' : '';
-            let ratingSummary = `⭐ <strong>${data.calif_promedio} / 7</strong> <span style="color:#777;">(${data.calif_total} ${data.calif_total === 1 ? 'opinión' : 'opiniones'})</span>`;
-            
-            if (data.calif_total === 0) {
-                ratingSummary = '<span style="color:#777;">(Sin opiniones aún)</span>';
-            }
+            const data = await response.json();
+            proveedorData = data;
 
-            // 2. Render Portafolio
-            let portfolioHtml = '<h3>Portafolio</h3>';
-            if (data.portafolio.length > 0) {
-                portfolioHtml += '<div class="portfolio-grid">';
-                data.portafolio.forEach(item => {
-                    portfolioHtml += `
-                        <div class="portfolio-item">
-                            <img src="${item.imagen_url}" alt="${item.descripcion || 'Trabajo'}">
-                            <p>${item.descripcion || 'Trabajo realizado'}</p>
-                        </div>
-                    `;
-                });
-                portfolioHtml += '</div>';
-            } else {
-                portfolioHtml += '<p>Este proveedor aún no ha subido fotos de sus trabajos.</p>';
-            }
+            renderProfile(container, data);
+            initAgendaPanel(data);
 
-            // 3. Render Calificaciones
-            let ratingsHtml = '<h3>Opiniones de Clientes</h3>';
-            if (data.calificaciones.length > 0) {
-                ratingsHtml += '<div class="rating-list">';
-                data.calificaciones.forEach(calif => {
-                    // Genera las N estrellas
-                    const stars = '⭐'.repeat(calif.puntuacion);
-                    const emptyStars = '☆'.repeat(7 - calif.puntuacion);
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = '<p class="text-error-soft">Error al cargar el perfil. Es posible que el proveedor no exista.</p>';
+        }
+    });
 
-                    ratingsHtml += `
-                        <div class="rating-card">
-                            <div class="stars">${stars}<span style="color:#ccc;">${emptyStars}</span></div>
-                            <p class="comment">"${calif.comentario || 'Sin comentario.'}"</p>
-                            <span class="author">- ${calif.nombre_usuario} (${calif.timestamp})</span>
-                        </div>
-                    `;
-                });
-                ratingsHtml += '</div>';
-            } else {
-                ratingsHtml += '<p>Este proveedor aún no ha recibido opiniones.</p>';
-            }
+    function renderProfile(container, data) {
+        let urgenciaBadge = data.atiende_urgencias
+            ? '<span class="badge-urgente">Atiende Urgencias</span>'
+            : '';
 
-            // 4. Ensamblar todo
-            container.innerHTML = `
-                <section class="profile-header">
-                    <h1>${data.nombre}</h1>
-                    <p class="oficio">${data.oficio} ${urgenciaBadge}</p>
-                    <p class="rating-summary">${ratingSummary}</p>
-                    <hr>
-                    <p>${data.descripcion || 'Sin descripción.'}</p>
-                    <p><strong>📍 Comuna:</strong> ${data.comuna || 'No especificada'}</p>
-                    <p><strong>🕒 Horario:</strong> ${data.horario || 'No especificado'}</p>
-                    <p><strong>📞 Contacto:</strong> ${data.telefono}</p>
-                </section>
+        let ratingSummary = `⭐ <strong>${data.calif_promedio} / 7</strong> 
+            <span class="rating-count">(${data.calif_total} ${data.calif_total === 1 ? 'opinión' : 'opiniones'})</span>`;
 
-                <section class="profile-section">
-                    ${portfolioHtml}
-                </section>
-                
-                <section class="profile-section">
-                    ${ratingsHtml}
-                </section>
-            `;
+        if (data.calif_total === 0) {
+            ratingSummary = '<span class="rating-count">(Sin opiniones aún)</span>';
         }
 
-    </script>
+        // Portafolio
+        let portfolioHtml = '<h3 class="section-title">Portafolio</h3>';
+        if (data.portafolio.length > 0) {
+            portfolioHtml += '<div class="portfolio-grid">';
+            data.portafolio.forEach(item => {
+                portfolioHtml += `
+                    <div class="portfolio-item">
+                        <img src="${item.imagen_url}" alt="${item.descripcion || 'Trabajo'}">
+                        <p class="portfolio-caption">${item.descripcion || 'Trabajo realizado'}</p>
+                    </div>
+                `;
+            });
+            portfolioHtml += '</div>';
+        } else {
+            portfolioHtml += '<p class="text-muted-soft">Este proveedor aún no ha subido fotos de sus trabajos.</p>';
+        }
+
+        // Calificaciones
+        let ratingsHtml = '<h3 class="section-title">Opiniones de clientes</h3>';
+        if (data.calificaciones.length > 0) {
+            ratingsHtml += '<div class="rating-list">';
+            data.calificaciones.forEach(calif => {
+                const stars = '⭐'.repeat(calif.puntuacion);
+                const emptyStars = '☆'.repeat(7 - calif.puntuacion);
+                ratingsHtml += `
+                    <div class="rating-card">
+                        <div class="stars">${stars}<span class="stars-empty">${emptyStars}</span></div>
+                        <p class="comment">"${calif.comentario || 'Sin comentario.'}"</p>
+                        <span class="author">- ${calif.nombre_usuario} (${calif.timestamp})</span>
+                    </div>
+                `;
+            });
+            ratingsHtml += '</div>';
+        } else {
+            ratingsHtml += '<p class="text-muted-soft">Este proveedor aún no ha recibido opiniones.</p>';
+        }
+
+        container.innerHTML = `
+            <section class="profile-header">
+                <h1 class="profile-name">${data.nombre}</h1>
+                <p class="profile-oficio">${data.oficio} ${urgenciaBadge}</p>
+                <p class="rating-summary">${ratingSummary}</p>
+                <hr>
+                <p class="profile-description">${data.descripcion || 'Sin descripción.'}</p>
+                <p><strong>📍 Dirección:</strong> ${data.direccion || 'No especificada'}</p>
+                <p><strong>🕒 Horario:</strong> ${data.horario || 'No especificado'}</p>
+                <p><strong>📞 Contacto:</strong> ${data.telefono}</p>
+            </section>
+
+            <section class="profile-section">
+                ${portfolioHtml}
+            </section>
+            
+            <section class="profile-section">
+                ${ratingsHtml}
+            </section>
+        `;
+    }
+
+    function initAgendaPanel(data) {
+        const horarioRef = document.getElementById('agenda-horario-referencia');
+        if (horarioRef) {
+            horarioRef.textContent = data.horario
+                ? `Horario de referencia del proveedor: ${data.horario}`
+                : 'Horario de referencia no especificado por el proveedor.';
+        }
+
+        const fechaInput = document.getElementById('agenda-fecha');
+        if (fechaInput) {
+            const hoy = new Date().toISOString().split('T')[0];
+            fechaInput.min = hoy;
+        }
+    }
+
+    // Envío del formulario de agenda
+    document.addEventListener('DOMContentLoaded', () => {
+        const formAgenda = document.getElementById('form-agenda');
+        const msgBox = document.getElementById('agenda-msg');
+
+        if (!formAgenda) return;
+
+        formAgenda.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fecha = document.getElementById('agenda-fecha').value;
+            const hora_inicio = document.getElementById('agenda-hora-inicio').value;
+            const hora_fin = document.getElementById('agenda-hora-fin').value;
+            const descripcion = document.getElementById('agenda-descripcion').value;
+
+            msgBox.textContent = 'Enviando solicitud...';
+            msgBox.className = 'agenda-msg agenda-msg-pending';
+
+            try {
+                const resp = await fetch(`/api/proveedores/${PROVEEDOR_ID}/solicitudes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ fecha, hora_inicio, hora_fin, descripcion })
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok) {
+                    throw new Error(data.error || 'Error al enviar la solicitud');
+                }
+
+                msgBox.textContent = 'Solicitud enviada correctamente, redireccionando...';
+                msgBox.className = 'agenda-msg agenda-msg-success';
+
+                // Siempre que la solicitud se cree bien, rediriges
+                setTimeout(() => {
+                    window.location.href = "/mis_solicitudes";
+                }, 900);
+
+                formAgenda.reset();
+
+
+            } catch (err) {
+                console.error(err);
+                msgBox.textContent = err.message || 'Error al enviar la solicitud.';
+                msgBox.className = 'agenda-msg agenda-msg-error';
+            }
+        });
+    });
+</script>
+
 </body>
 </html>

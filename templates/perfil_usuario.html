@@ -4,78 +4,101 @@
     <meta charset="UTF-8">
     <title>Mi Perfil - Zerby</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap + tema -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background: #f4f7f6; padding: 20px; }
-        .card { max-width: 600px; margin: 0 auto; padding: 30px; border-radius: 15px; border:none; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        h2 { color: #333; margin-bottom: 25px; text-align: center; }
-        label { font-weight: 600; color: #555; margin-top: 15px; }
-        .btn-save { background-color: #007bff; color: white; font-weight: bold; margin-top: 20px; width: 100%; }
-        .btn-save:hover { background-color: #0056b3; }
-        .readonly-field { background-color: #e9ecef; cursor: not-allowed; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="app-body">
 
-    <div class="card">
-        <h2>Mi Perfil</h2>
-        
-        <form id="form-perfil">
-            <label>Nombre Completo</label>
-            <input type="text" class="form-control readonly-field" value="{{ usuario.nombre_completo }}" readonly>
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+            
+        </a>
+        <div class="app-nav-links">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/mis_solicitudes">Mis solicitudes</a>
+            <a href="/bandeja_entrada">Mensajes</a>
+            <a href="/api/logout" class="primary">Cerrar sesión</a>
+        </div>
+    </div>
+</header>
 
-            <label>Correo Electrónico</label>
-            <input type="email" class="form-control readonly-field" value="{{ usuario.email }}" readonly>
+<main class="app-main app-main-centered">
+    <section class="app-card app-card-narrow">
+        <h2 class="app-card-title text-center mb-3">Mi Perfil</h2>
 
-            <label>Teléfono</label>
-            <input type="text" id="telefono" class="form-control" value="{{ usuario.telefono or '' }}" placeholder="+56 9...">
+        <form id="form-perfil" class="profile-form">
+            <div class="mb-3">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" class="form-control readonly-field" value="{{ usuario.nombre_completo }}" readonly>
+            </div>
 
-            <label>Dirección (Calle, número y comuna)</label>
-            <input type="text" id="direccion" class="form-control" value="{{ usuario.direccion or '' }}" placeholder="Ej: Av. Providencia 1234, Santiago">
+            <div class="mb-3">
+                <label class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control readonly-field" value="{{ usuario.email }}" readonly>
+            </div>
 
-            <button type="submit" class="btn btn-save">Guardar Cambios</button>
+            <div class="mb-3">
+                <label class="form-label">Teléfono</label>
+                <input type="text" id="telefono" class="form-control" value="{{ usuario.telefono or '' }}" placeholder="+56 9...">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Dirección (Calle, número y comuna)</label>
+                <input type="text" id="direccion" class="form-control" value="{{ usuario.direccion or '' }}" placeholder="Ej: Av. Providencia 1234, Santiago">
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 profile-save-btn">Guardar cambios</button>
         </form>
 
-        <a href="/dashboard" class="btn btn-link w-100 mt-3" style="text-decoration: none; color: #666;">Volver al Dashboard</a>
-    </div>
+        <a href="/dashboard" class="btn btn-link w-100 mt-3 profile-back-link">
+            Volver al Dashboard
+        </a>
+    </section>
+</main>
 
-    <script>
-        // Lógica para enviar el formulario sin recargar la página
-        document.getElementById('form-perfil').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const btn = document.querySelector('.btn-save');
-            const originalText = btn.textContent;
-            btn.textContent = 'Guardando...';
-            btn.disabled = true;
+<script>
+    document.getElementById('form-perfil').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const btn = document.querySelector('.profile-save-btn');
+        const originalText = btn.textContent;
+        btn.textContent = 'Guardando...';
+        btn.disabled = true;
 
-            const datos = {
-                telefono: document.getElementById('telefono').value,
-                direccion: document.getElementById('direccion').value
-            };
+        const datos = {
+            telefono: document.getElementById('telefono').value,
+            direccion: document.getElementById('direccion').value
+        };
 
-            try {
-                const response = await fetch('/api/usuario/actualizar_perfil', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(datos)
-                });
+        try {
+            const response = await fetch('/api/usuario/actualizar_perfil', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(datos)
+            });
 
-                const resultado = await response.json();
+            const resultado = await response.json();
 
-                if (response.ok) {
-                    alert('¡Perfil actualizado con éxito!');
-                } else {
-                    alert('Error: ' + resultado.error);
-                }
-            } catch (error) {
-                console.error(error);
-                alert('Hubo un error al conectar con el servidor.');
-            } finally {
-                btn.textContent = originalText;
-                btn.disabled = false;
+            if (response.ok) {
+                alert('¡Perfil actualizado con éxito!');
+            } else {
+                alert('Error: ' + (resultado.error || 'No se pudo actualizar el perfil.'));
             }
-        });
-    </script>
+        } catch (error) {
+            console.error(error);
+            alert('Hubo un error al conectar con el servidor.');
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    });
+</script>
+
 </body>
 </html>

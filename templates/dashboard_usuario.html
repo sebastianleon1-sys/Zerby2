@@ -3,201 +3,131 @@
 <head>
     <meta charset="UTF-8">
     <title>Zerby - Buscar Servicios</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background: #f9f9f9; }
-        nav { display: flex; justify-content: space-between; align-items: center; }
-        nav h1 { font-size: 20px; }
-        nav h1 span { font-weight: normal; }
-        
-        .search-container {
-            margin: 20px 0; display: flex; gap: 10px;
-        }
-        .search-container input {
-            flex-grow: 1; padding: 12px; font-size: 16px;
-        }
-        .search-container button {
-            padding: 12px 20px; font-size: 16px; background: #007bff; color: white; border: none; cursor: pointer;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        .results-container h2 {
-            border-bottom: 2px solid #eee; padding-bottom: 10px;
-        }
-        .provider-card {
-            background: white; border: 1px solid #ddd;
-            padding: 15px; margin-bottom: 10px; border-radius: 8px;
-        }
-        .provider-card h3 {
-            margin: 0 0 5px 0; color: #007bff;
-        }
-        .provider-card .proveedor-nombre {
-            font-weight: bold; background: #eee; padding: 3px 6px; border-radius: 4px;
-            font-size: 14px;
-            color: #333;
-        }
-        .provider-card p {
-            margin: 10px 0 0 0;
-        }
-        .provider-card .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .provider-card .badge-urgente {
-            background: #dc3545;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 4px 8px;
-            border-radius: 10px;
-        }
-        
-    .chat-button {
-        background: #28a745; 
-        color: white;
-        padding: 8px 12px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        float: right; 
-        margin-top: -10px; 
-    }
-    .chat-button:hover {
-        background: #218838;
-    }
-
-    /* ===== NAV: que no se solapen ===== */
-    nav{
-    display:flex; justify-content:space-between; align-items:center; gap:10px;
-    flex-wrap:wrap;  /* <- permite que bajen a segunda línea en móvil */
-    }
-    nav a{
-    display:inline-flex; align-items:center; justify-content:center;
-    padding:10px 14px; border-radius:10px; text-decoration:none;
-    background: linear-gradient(135deg,#6c5ce7,#00e5a8); color:#fff; font-weight:700;
-    min-height:40px; white-space:nowrap;
-    }
-    @media (max-width:480px){
-    nav a{ width:100%; }        /* en móvil, a todo el ancho */
-    }
-
-    /* ===== Buscador: apilar en móvil ===== */
-    .search-container{
-    display:flex; gap:10px; flex-wrap:wrap;
-    }
-    .search-container input,
-    .search-container select,
-    .search-container button{
-    flex:1 1 100%;
-    height:44px; border-radius:12px;
-    }
-    .search-container button{
-    background:#4f46e5; border:none; color:#fff; font-weight:800;
-    }
-
-    /* ===== Tarjeta del proveedor ===== */
-    .provider-card{ position:relative; }
-
-    /* Cabecera de la tarjeta: oficio + badge alineados */
-    .provider-card .card-header{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    }
-
-    /* Pie de tarjeta para el botón (evita floats) */
-    .card-actions{
-    display:flex; justify-content:flex-end; margin-top:10px;
-    }
-    @media (max-width:480px){
-    .card-actions{ justify-content:center; }
-    }
-
-    /* Botón Contactar (sin float, sin margen negativo) */
-    .chat-button{
-    background:#22c55e; color:#fff; font-weight:800;
-    padding:10px 16px; border:none; border-radius:10px; cursor:pointer;
-    display:inline-flex; align-items:center; justify-content:center;
-    min-width:140px;
-    transition:.2s background, .2s transform;
-    }
-    .chat-button:hover{ background:#16a34a }
-    @media (max-width:480px){
-    .chat-button{ width:100%; }
-    }
-    .rating-display {
-        font-size: 14px;
-        color: #555;
-        margin: 5px 0 10px 0; /* Espacio entre el header y el nombre */
-    }
-    .rating-display strong {
-        color: #000;
-        font-size: 16px;
-    }
-    .rating-count {
-        color: #777;
-        margin-left: 5px;
-    }
-    .proveedor-nombre a {
-        text-decoration: none;
-        color: #333; /* O el color que prefieras */
-        font-weight: bold;
-    }
-    .proveedor-nombre a:hover {
-        text-decoration: underline;
-    }
-    
-    /* Estilo para la distancia */
-    .distancia-badge {
-        color: #198754;
-        font-weight: bold;
-        font-size: 0.9em;
-        margin-left: 10px;
-        background: #e8f5e9;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }
-    </style>
-
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <!-- Bootstrap + tema -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="app-body">
 
-    <nav>
-    <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
-    <div>
-        <a id="link-mi-perfil" href="#" style="margin-right: 15px;">Mi perfil</a>
-        <a href="/bandeja_entrada" style="margin-right: 15px;">Mis Mensajes</a>
-        <a href="/api/logout">Cerrar Sesión</a>
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+            
+        </a>
+        <div class="app-nav-links">
+            <a href="/dashboard" class="primary">Buscar servicios</a>
+            <a href="/mis_solicitudes">Mis solicitudes</a>
+            <a href="/bandeja_entrada">Mensajes</a>
+            <a href="/api/logout">Cerrar sesión</a>
+        </div>
     </div>
-</nav>
-    <hr>
+</header>
 
-    <section class="search-container">
-        <form id="form-busqueda" style="display: contents;">
-            <input type="search" id="search-query" 
-                   placeholder="Buscar por servicio, descripción o dirección..." 
-                   style="flex-grow: 2;"> 
-            <button type="submit">Buscar</button>
-        </form>
-    </section>
-
-    <section class="results-container">
-        <h2 id="results-title">Servicios Cercanos (Sugeridos)</h2>
-        <button id="buscar-cercanos" class="btn btn-outline-primary btn-sm mb-3">Ver Más Cercanos a Mí</button>
-        <div id="results-list">
+<main class="app-main">
+    <div class="app-card mb-4">
+        <div class="app-card-header">
+            <div>
+                <div class="app-card-title" id="welcome-msg">¡Hola, <span>cargando...</span>!</div>
+                <div class="app-card-subtitle">
+                    Encuentra servicios cerca de ti o filtra por oficio.
+                </div>
             </div>
+        </div>
+
+        <section class="search-container mt-2">
+            <form id="form-busqueda" class="search-form">
+                <input 
+                    type="search" 
+                    id="search-query" 
+                    class="form-control search-input"
+                    placeholder="Buscar por servicio, descripción o dirección..."
+                >
+
+                <select id="filter-oficio" class="form-select search-select">
+                    <option value="">Filtrar por oficio...</option>
+                    <optgroup label="Hogar: Mantenimiento y Reparación">
+                        <option value="Gasfitería">Gasfitería</option>
+                        <option value="Electricidad">Electricidad</option>
+                        <option value="Cerrajería">Cerrajería</option>
+                        <option value="Carpintería">Carpintería</option>
+                        <option value="Pintura">Pintura</option>
+                        <option value="Armado de Muebles">Armado de Muebles</option>
+                        <option value="Instalaciones (Lámparas, TV, cortinas)">Instalaciones (Lámparas, TV, cortinas)</option>
+                        <option value="Técnico Aire Acondicionado (HVAC)">Técnico Aire Acondicionado (HVAC)</option>
+                        <option value="Técnico Calefacción">Técnico Calefacción</option>
+                        <option value="Reparación Electrodomésticos">Reparación Electrodomésticos</option>
+                        <option value="Vidriería">Vidriería</option>
+                    </optgroup>
+                    <optgroup label="Hogar: Limpieza y Servicios">
+                        <option value="Limpieza Profunda Domicilio">Limpieza Profunda Domicilio</option>
+                        <option value="Limpieza Tapicería/Alfombras">Limpieza Tapicería/Alfombras</option>
+                        <option value="Jardinería">Jardinería</option>
+                        <option value="Control de Plagas">Control de Plagas</option>
+                        <option value="Mudanzas y Fletes">Mudanzas y Fletes</option>
+                        <option value="Retiro de Escombros/Muebles">Retiro de Escombros/Muebles</option>
+                    </optgroup>
+                    <optgroup label="Vehículos">
+                        <option value="Mecánica Automotriz">Mecánica Automotriz</option>
+                        <option value="Lavado de Autos a Domicilio">Lavado de Autos a Domicilio</option>
+                    </optgroup>
+                    <optgroup label="Cuidado Personal y Bienestar">
+                        <option value="Peluquería a Domicilio">Peluquería a Domicilio</option>
+                        <option value="Manicura y Pedicura">Manicura y Pedicura</option>
+                        <option value="Maquillaje a Domicilio">Maquillaje a Domicilio</option>
+                        <option value="Barbería a Domicilio">Barbería a Domicilio</option>
+                        <option value="Masoterapia">Masoterapia</option>
+                        <option value="Entrenador Personal">Entrenador Personal</option>
+                    </optgroup>
+                    <optgroup label="Cuidado y Asistencia">
+                        <option value="Niñera (Babysitter)">Niñera (Babysitter)</option>
+                        <option value="Cuidado de Adulto Mayor">Cuidado de Adulto Mayor</option>
+                    </optgroup>
+                    <optgroup label="Mascotas">
+                        <option value="Paseador de Perros">Paseador de Perros</option>
+                        <option value="Peluquería Canina">Peluquería Canina</option>
+                        <option value="Adiestramiento Canino">Adiestramiento Canino</option>
+                    </optgroup>
+                    <optgroup label="Profesionales y Eventos">
+                        <option value="Profesor Particular">Profesor Particular</option>
+                        <option value="Soporte Técnico (PC/Redes)">Soporte Técnico (PC/Redes)</option>
+                        <option value="Reparación de Celulares">Reparación de Celulares</option>
+                        <option value="Fotografía">Fotografía</option>
+                        <option value="Banquetería / Cóctel">Banquetería / Cóctel</option>
+                        <option value="DJ y Sonido">DJ y Sonido</option>
+                    </optgroup>
+                    <option value="Otro">Otro</option>
+                </select>
+
+                <button type="submit" class="btn btn-primary search-submit">Buscar</button>
+            </form>
+        </section>
+    </div>
+
+    <section class="app-card">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 id="results-title" class="mb-0">Servicios Cercanos (Sugeridos)</h5>
+            <button id="buscar-cercanos" class="btn btn-outline-light btn-sm">
+                Ver más cercanos a mí
+            </button>
+        </div>
+        <div id="results-list" class="providers-grid"></div>
     </section>
+</main>
 
 <script>
+    const DEFAULT_PROVIDER_IMAGE = "{{ url_for('static', filename='img/default_service.jpg') }}";
+
     function mostrarProveedores(proveedores) {
         const resultsList = document.getElementById('results-list');
-        resultsList.innerHTML = ''; 
+        resultsList.innerHTML = '';
 
-        if (proveedores.length === 0) {
-            resultsList.innerHTML = '<p>No se encontraron proveedores para tu búsqueda.</p>';
+        if (!proveedores || !proveedores.length) {
+            resultsList.innerHTML = '<p class="text-muted-soft">No se encontraron proveedores para tu búsqueda.</p>';
             return;
         }
 
@@ -205,79 +135,71 @@
             const card = document.createElement('div');
             card.className = 'provider-card';
 
-            // --- Lógica de Calificación ---
+            const imagen = p.imagen_portada || DEFAULT_PROVIDER_IMAGE;
+
             let ratingHtml = '';
             if (p.calif_total > 0) {
                 ratingHtml = `
                     <div class="rating-display">
-                        ⭐ <strong>${p.calif_promedio} / 7</strong> 
+                        ⭐ <strong>${p.calif_promedio} / 7</strong>
                         <span class="rating-count">(${p.calif_total} calif.)</span>
                     </div>`;
             } else {
                 ratingHtml = `<div class="rating-display"><span class="rating-count">(Sin calificaciones aún)</span></div>`;
             }
 
-            // --- CAMBIO: Lógica de Distancia ---
-            // Si el backend nos manda 'distancia_km', lo mostramos
             let distanciaHtml = '';
-            if (p.distancia_km !== undefined) {
-                distanciaHtml = `<span class="distancia-badge">📍 a ${p.distancia_km} km de ti</span>`;
+            if (p.distancia_km !== undefined && p.distancia_km !== null) {
+                distanciaHtml = `<span class="distancia-badge">📍 ${p.distancia_km} km</span>`;
             }
 
             card.innerHTML = `
-                <div class="card-header">
-                    <h3>${p.oficio} ${distanciaHtml}</h3>
-                    ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
+                <img src="${imagen}" alt="Servicio de ${p.oficio}" class="provider-image mb-2">
+                <div class="card-body p-0">
+                    <div class="provider-card-header mb-1">
+                        <h5 class="mb-0">${p.oficio}</h5>
+                        ${p.atiende_urgencias ? '<span class="badge-urgente">Atiende Urgencias</span>' : ''}
+                    </div>
+                    ${ratingHtml}
+                    <div class="proveedor-nombre mb-1">
+                        Profesional:
+                        <a href="/perfil/proveedor/${p.proveedor_id}" target="_blank" class="proveedor-link">
+                            ${p.nombre}
+                        </a>
+                        ${distanciaHtml}
+                    </div>
+                    <p class="mb-1"><strong>📍 Ubicación:</strong> ${p.direccion || 'Sin dirección pública'}</p>
+                    <p class="mb-1"><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
+                    <p class="mb-0"><strong>📞 Contacto:</strong> ${p.telefono}</p>
                 </div>
-
-                ${ratingHtml} 
-
-                <span class="proveedor-nombre">
-                    Profesional: 
-                    <a href="/perfil/proveedor/${p.proveedor_id}" target="_blank" title="Ver perfil completo">
-                        ${p.nombre}
-                    </a>
-                </span>
-                
-                <p>${p.descripcion || 'Sin descripción.'}</p>
-                <hr style="border:0; border-top:1px solid #eee; margin:10px 0;">
-                
-                <p><strong>📍 Ubicación:</strong> ${p.direccion || 'Sin dirección pública'}</p>
-                <p><strong>🕒 Horario:</strong> ${p.horario || 'No especificado'}</p>
-                <p><strong>📞 Contacto:</strong> ${p.telefono}</p>
-                
                 <div class="card-actions">
-                    <button class="chat-button" onclick="iniciarChat(${p.proveedor_id})">
-                        Contactar
+                    <button class="chat-button" onclick="verPerfil(${p.proveedor_id})">
+                        Ver servicio / Agendar
                     </button>
                 </div>
             `;
+
             resultsList.appendChild(card);
         });
     }
 
-    window.addEventListener('load', async function() {
-        // 1. OBTENER MIS DATOS
+    window.addEventListener('load', async function () {
         try {
             const responseProfile = await fetch('/api/get_profile');
             if (!responseProfile.ok) throw new Error('No autorizado');
             const datos = await responseProfile.json();
-            
+
             document.querySelector('#welcome-msg span').textContent = datos.nombre;
 
-            const linkPerfil = document.getElementById('link-mi-perfil');
-            if (linkPerfil) linkPerfil.href = `/perfil/usuario/${datos.id}`; 
-
         } catch (e) {
-            window.location.href = '/login'; 
+            console.error('Error al obtener perfil:', e);
+            window.location.href = '/login';
             return;
         }
 
-        // 2. CARGAR EL CATÁLOGO (Cercanos por defecto)
         cargarCercanos();
     });
 
-    // Función extraída para reutilizarla
     async function cargarCercanos() {
         const resultsList = document.getElementById('results-list');
         const resultsTitle = document.getElementById('results-title');
@@ -293,28 +215,29 @@
             mostrarProveedores(proveedores);
         } catch (e) {
             console.error("Error al cargar proveedores cercanos:", e);
-            resultsList.innerHTML = `<p style="color: red;">No se pudo calcular la ubicación. Asegúrate de tener una dirección guardada en tu perfil.</p>`;
+            resultsList.innerHTML = `
+                <p class="text-error-soft">
+                    No se pudo calcular la ubicación o cargar proveedores.
+                    Asegúrate de tener una dirección guardada en tu perfil.
+                </p>`;
         }
     }
 
-    // --- CAMBIO: Búsqueda solo por texto ---
-    document.getElementById('form-busqueda').addEventListener('submit', async function(e) {
-        e.preventDefault(); 
+    document.getElementById('form-busqueda').addEventListener('submit', async function (e) {
+        e.preventDefault();
 
-        const query = document.getElementById('search-query').value;
+        const query = document.getElementById('search-query').value.trim();
         const resultsTitle = document.getElementById('results-title');
 
         if (!query) {
-            // Si busca vacío, volvemos a mostrar cercanos
             cargarCercanos();
-            return; 
+            return;
         }
-        
+
         resultsTitle.textContent = `Resultados para "${query}"`;
-        
+
         try {
-            // Ya no enviamos &comuna=...
-            const response = await fetch(`/api/buscar?q=${query}`);
+            const response = await fetch(`/api/buscar?q=${encodeURIComponent(query)}`);
             const proveedores = await response.json();
             mostrarProveedores(proveedores);
         } catch (e) {
@@ -322,25 +245,37 @@
         }
     });
 
-    // Botón para volver a ver "Cercanos" después de una búsqueda
-    document.getElementById('buscar-cercanos').addEventListener('click', function() {
-        document.getElementById('search-query').value = ''; // Limpiar buscador
+    document.getElementById('buscar-cercanos').addEventListener('click', function () {
+        document.getElementById('search-query').value = '';
+        document.getElementById('filter-oficio').value = '';
         cargarCercanos();
     });
 
-    async function iniciarChat(proveedorId) {
-        try {
-            const response = await fetch(`/api/iniciar_chat/${proveedorId}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' }
-            });
-            if (!response.ok) throw new Error('Error al iniciar chat');
-            const data = await response.json();
-            window.location.href = '/conversacion/' + data.conversacion_id;
-        } catch (error) {
-            console.error(error);
-            alert('No se pudo iniciar la conversación.');
+    document.getElementById('filter-oficio').addEventListener('change', async function () {
+        const oficio = this.value;
+        const resultsTitle = document.getElementById('results-title');
+        const searchInput = document.getElementById('search-query');
+
+        if (!oficio) {
+            searchInput.value = '';
+            cargarCercanos();
+            return;
         }
+
+        searchInput.value = oficio;
+        resultsTitle.textContent = `Resultados para "${oficio}"`;
+
+        try {
+            const response = await fetch(`/api/buscar?q=${encodeURIComponent(oficio)}`);
+            const proveedores = await response.json();
+            mostrarProveedores(proveedores);
+        } catch (e) {
+            console.error('Error al filtrar por oficio:', e);
+        }
+    });
+
+    function verPerfil(proveedorId) {
+        window.location.href = `/perfil/proveedor/${proveedorId}#agenda`;
     }
 </script>
 

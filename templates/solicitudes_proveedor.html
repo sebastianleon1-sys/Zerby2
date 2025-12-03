@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Zerby - Solicitudes de Servicio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap + tema -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+</head>
+<body class="app-body">
+
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
+            
+        </a>
+        <div class="app-nav-links">
+            <a href="/dashboard">Panel proveedor</a>
+            <a href="/solicitudes" class="primary">Solicitudes</a>
+            <a href="/bandeja_entrada">Mensajes</a>
+            <a href="/api/logout">Cerrar sesión</a>
+        </div>
+    </div>
+</header>
+
+<main class="app-main">
+    <section class="app-card mb-4">
+        <div class="app-card-header">
+            <div>
+                <div class="app-card-title">Solicitudes de servicio</div>
+                <div class="app-card-subtitle">
+                    Acepta, rechaza y confirma servicios realizados.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="solicitudes-container" class="list-stack">
+        <p class="text-muted-soft">Cargando solicitudes...</p>
+    </section>
+</main>
+
+<script>
+    async function cargarSolicitudes() {
+        const cont = document.getElementById("solicitudes-container");
+        cont.innerHTML = "<p class='text-muted-soft'>Cargando solicitudes...</p>";
+
+        try {
+            const resp = await fetch("/api/solicitudes/proveedor");
+            const solicitudes = await resp.json();
+
+            if (!solicitudes.length) {
+                cont.innerHTML = "<p class='text-muted-soft'>No tienes solicitudes por ahora.</p>";
+                return;
+            }
+
+            cont.innerHTML = "";
+            solicitudes.forEach(s => {
+                const card = document.createElement("div");
+                card.className = "solicitud-card";
+
+                const puedeConfirmar = (s.estado === "pagado");
+
+                card.innerHTML = `
+                    <div class="solicitud-header">
+                        <div>
+                            <strong>Cliente:</strong> ${s.cliente}<br>
+                            <small class="text-muted-soft">${s.creado_en}</small>
+                        </div>
+                        <span class="solicitud-estado ${s.estado}">
+                            ${s.estado.toUpperCase()}
+                        </span>
+                    </div>
+
+                    <p class="mb-1"><strong>Fecha:</strong> ${s.fecha}</p>
+                    <p class="mb-1"><strong>Horario:</strong> ${s.hora_inicio} - ${s.hora_fin}</p>
+                    <p class="mb-0"><strong>Descripción:</strong> ${s.descripcion || "Sin detalles adicionales."}</p>
+
+                    <div class="solicitud-actions mt-2">
+                        <button class="btn btn-success btn-sm"
+                            onclick="actualizarEstado(${s.id}, 'aceptada')"
+                            ${s.estado !== "pendiente" ? "disabled" : ""}>
+                            Aceptar
+                        </button>
+
+                        <button class="btn btn-outline-danger btn-sm"
+                            onclick="actualizarEstado(${s.id}, 'rechazada')"
+                            ${s.estado !== "pendiente" ? "disabled" : ""}>
+                            Rechazar
+                        </button>
+
+                        ${
+                            puedeConfirmar
+                                ? `<button class="btn btn-primary btn-sm"
+                                         onclick="confirmarPin(${s.id})">
+                                        Confirmar servicio (PIN)
+                                   </button>`
+                                : ""
+                        }
+                    </div>
+                `;
+
+                cont.appendChild(card);
+            });
+
+
+        } catch (e) {
+            console.error(e);
+            cont.innerHTML = "<p class='text-error-soft'>Error al cargar solicitudes.</p>";
+        }
+    }
+
+    async function actualizarEstado(id, estado) {
+        if (!confirm(`¿Seguro que deseas marcar como "${estado}"?`)) return;
+
+        try {
+            const resp = await fetch(`/api/solicitudes/${id}/estado`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ estado })
+            });
+
+            const data = await resp.json();
+            if (resp.ok) {
+                cargarSolicitudes();
+            } else {
+                alert(data.error || "Error al actualizar.");
+            }
+
+        } catch (e) {
+            alert("Error en la solicitud.");
+        }
+    }
+
+    async function confirmarPin(id) {
+        const pin = prompt("Ingresa el PIN que te mostró el cliente:");
+        if (!pin) return;
+
+        try {
+            const resp = await fetch(`/api/solicitudes/${id}/confirmar_pin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pin })
+            });
+
+            const data = await resp.json();
+
+            if (resp.ok) {
+                alert("Servicio confirmado correctamente.");
+                cargarSolicitudes();
+            } else {
+                alert(data.error || "PIN incorrecto.");
+            }
+        } catch (e) {
+            alert("Error al confirmar el PIN.");
+        }
+    }
+
+    cargarSolicitudes();
+    setInterval(cargarSolicitudes, 10000);
+</script>
+
+</body>
+</html>

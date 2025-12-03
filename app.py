@@ -3,8 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from dotenv import load_dotenv
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, time
 from flask_socketio import SocketIO
+
 
 load_dotenv()
 
@@ -105,6 +106,35 @@ class Calificacion(db.Model):
         db.CheckConstraint('puntuacion >= 1 AND puntuacion <= 7', name='check_puntuacion_range')
     )
 
+class SolicitudServicio(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuario.id'), nullable=False)
+    proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
+
+    fecha = db.Column(db.Date, nullable=False)
+    hora_inicio = db.Column(db.Time, nullable=False)
+    hora_fin = db.Column(db.Time, nullable=False)
+
+    descripcion = db.Column(db.Text, nullable=True)
+
+    # pendiente / aceptada / rechazada / pagado / completado
+    estado = db.Column(db.String(20), nullable=False, default='pendiente')
+
+    creado_en = db.Column(db.DateTime, nullable=False, default=lambda: datetime.now(timezone.utc))
+
+    # PIN de 6 dígitos cuando se paga
+    pin_codigo = db.Column(db.String(6), nullable=True)
+
+    # Momento en que el proveedor confirmó el servicio con el PIN
+    confirmado_en = db.Column(db.DateTime, nullable=True)
+
+    # Relaciones para usar solicitud.usuario y solicitud.proveedor en Jinja
+    usuario = db.relationship("Usuario", backref="solicitudes_enviadas", lazy=True)
+    proveedor = db.relationship("Proveedor", backref="solicitudes_recibidas", lazy=True)
+
+
+
 class Portafolio(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     proveedor_id = db.Column(db.Integer, db.ForeignKey('proveedor.id'), nullable=False)
@@ -119,4 +149,8 @@ if __name__ == "__main__":
     # Importante: Importar las rutas AQUÍ, justo antes de correr la app
     # para asegurar que los modelos y la app ya existan.
     from routes import * 
+
+    with app.app_context():
+        db.create_all()
+
     socketio.run(app, host="127.0.0.1", port=5000, debug=True, use_reloader=False)

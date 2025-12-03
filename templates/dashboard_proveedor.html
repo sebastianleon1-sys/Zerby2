@@ -2,117 +2,78 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Zerby - Mi Panel de Proveedor</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Zerby - Panel de Proveedor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap + tema -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        nav { display: flex; justify-content: space-between; align-items: center; }
-        
-        /* Estilos para el portafolio */
-        .portfolio-manager {
-            max-width: 900px;
-            margin: 20px 0;
-        }
-        .form-add-portfolio {
-            background: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .form-add-portfolio input {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .form-add-portfolio button {
-            padding: 10px 15px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .portfolio-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-        .portfolio-item {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-            position: relative;
-        }
-        .portfolio-item img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-            display: block;
-        }
-        .portfolio-item p {
-            padding: 10px;
-            font-size: 14px;
-            margin: 0;
-            background: #fdfdfd;
-        }
-        .portfolio-item .delete-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-weight: bold;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-        .portfolio-item .delete-btn:hover { opacity: 1; }
-    </style>
 </head>
-<body>
+<body class="app-body">
 
-    <nav>
-        <h1 id="welcome-msg">¡Hola, <span>cargando...</span>!</h1>
-        <div>
-            <a id="ver-mi-perfil-link" href="#" style="margin-right: 15px; display: none;">Ver mi Perfil Público</a>
-            <a href="/bandeja_entrada" style="margin-right: 15px;">Bandeja de Entrada</a>
-            <a href="/api/logout">Cerrar Sesión</a>
-        </div>
-    </nav>
-    <hr>
-    
-    <h2>Tu Panel de Proveedor</h2>
-    <p>Gestiona los trabajos de tu portafolio. Estos se mostrarán en tu perfil público.</p>
-
-    <div class="portfolio-manager">
-        
-        <form class="form-add-portfolio" id="form-add-portfolio">
-            <h4>Añadir nuevo trabajo al portafolio</h4>
+<header class="app-navbar">
+    <div class="app-navbar-inner">
+        <a href="/" class="app-logo">
+            <img src="{{ url_for('static', filename='logo_zerby_white.png') }}" alt="Zerby Logo">
             
-            <label for="input-imagen-file" style="font-size: 0.9em; margin-bottom:5px;">Selecciona una foto:</label>
-            <input type="file" id="input-imagen-file" accept="image/*" required>
-            
-            <input type="text" id="input-imagen-desc" placeholder="Descripción (ej: 'Reparación de lavamanos')">
-            <button type="submit">Subir Foto</button>
-        </form>
-
-        <h3 style="margin-top: 30px;">Tus Trabajos Actuales</h3>
-        <div class="portfolio-grid" id="portfolio-grid">
-            <p>Cargando trabajos...</p>
+        </a>
+        <div class="app-nav-links">
+            <a href="/dashboard" class="primary">Panel proveedor</a>
+            <a href="/solicitudes">Solicitudes</a>
+            <a href="/bandeja_entrada">Mensajes</a>
+            <a href="/api/logout">Cerrar sesión</a>
         </div>
     </div>
+</header>
+
+<main class="app-main">
+    <div class="app-card mb-4">
+        <div class="app-card-header">
+            <div>
+                <div class="app-card-title" id="welcome-msg">
+                    ¡Hola, <span>cargando...</span>!
+                </div>
+                <div class="app-card-subtitle">
+                    Gestiona tu portafolio y las solicitudes de clientes.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-7">
+            <div class="app-card">
+                <h4 class="mb-3">Tu portafolio</h4>
+                <form class="mb-4" id="form-add-portfolio">
+                    <div class="mb-2">
+                        <label class="form-label">Foto de un trabajo</label>
+                        <input type="file" id="input-imagen-file" accept="image/*" required class="form-control">
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" id="input-imagen-desc" class="form-control"
+                               placeholder="Descripción (ej: 'Reparación de lavamanos')">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100 mt-2">Subir foto al portafolio</button>
+                </form>
+
+                <h5 class="mb-3">Trabajos actuales</h5>
+                <div class="portfolio-grid" id="portfolio-grid">
+                    <p class="text-muted-soft">Cargando trabajos...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-5">
+            <div class="app-card">
+                <h4 class="mb-3">Solicitudes recientes</h4>
+                <div id="solicitudes-list">
+                    <p class="text-muted-soft">Cargando solicitudes...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
 <script>
     const portfolioGrid = document.getElementById('portfolio-grid');
@@ -120,41 +81,19 @@
     window.addEventListener('load', async function() {
         let profileData;
         try {
-            // 1. Cargar datos del perfil (nombre, etc.)
             const responseProfile = await fetch('/api/get_profile');
             if (!responseProfile.ok) throw new Error('No autorizado');
             profileData = await responseProfile.json();
             
             document.querySelector('#welcome-msg span').textContent = profileData.nombre;
-            const linkPerfil = document.getElementById('ver-mi-perfil-link');
-            linkPerfil.href = `/perfil/proveedor/${profileData.id}`;
-            linkPerfil.style.display = 'inline-block';
 
         } catch (e) {
             window.location.href = '/login';
             return;
         }
 
-        // 2. Cargar datos del portafolio (usamos la API pública)
+        // Cargar portafolio usando el ID del proveedor entregado por /api/get_profile
         try {
-            const responsePortfolio = await fetch(`/api/perfil/proveedor/${profileData.user_id_debes_pasarlo_de_get_profile}`);
-            // --- OJO: /api/get_profile DEBE DEVOLVER EL ID DEL USUARIO ---
-            // --- VAMOS A ASUMIR QUE USAMOS EL ID DE LA SESIÓN ---
-            
-            // Corrección: /api/get_profile no nos da el ID.
-            // PERO /api/perfil/proveedor usa el ID del proveedor, 
-            // y como estamos logueados como proveedor, ¡podemos usar la API!
-            
-            // La API /api/get_profile es limitada. Usaremos la API del perfil público
-            // pero le pasaremos el ID que tenemos... un momento.
-            // ¡/api/get_profile no nos da nuestro propio ID!
-            
-            // --- ¡GRAN PROBLEMA Y SOLUCIÓN! ---
-            // Modificaremos /api/get_profile en app.py para que devuelva el ID
-            
-            // (Añade "id": user.id en el return jsonify de /api/get_profile)
-            // Asumamos que ya hiciste ese cambio (ver Paso 7)
-            
             const responseData = await fetch(`/api/perfil/proveedor/${profileData.id}`);
             if (!responseData.ok) throw new Error('Error cargando datos');
             
@@ -163,19 +102,19 @@
 
         } catch (e) {
             console.error(e);
-            portfolioGrid.innerHTML = "<p>Error al cargar tu portafolio.</p>";
+            portfolioGrid.innerHTML = "<p class='text-error-soft'>Error al cargar tu portafolio.</p>";
         }
+
+        loadSolicitudesServicio();
     });
 
     function mostrarPortafolio(items) {
         portfolioGrid.innerHTML = '';
-        if (items.length === 0) {
-            portfolioGrid.innerHTML = "<p>Aún no has subido trabajos a tu portafolio.</p>";
+        if (!items.length) {
+            portfolioGrid.innerHTML = "<p class='text-muted-soft'>Aún no has subido trabajos a tu portafolio.</p>";
             return;
         }
-        items.forEach(item => {
-            agregarItemGrid(item);
-        });
+        items.forEach(item => agregarItemGrid(item));
     }
 
     function agregarItemGrid(item) {
@@ -184,13 +123,13 @@
         div.id = `item-${item.id}`;
         div.innerHTML = `
             <img src="${item.imagen_url}" alt="${item.descripcion || 'Trabajo'}">
-            <p>${item.descripcion || 'Sin descripción'}</p>
-            <button class="delete-btn" onclick="eliminarTrabajo(${item.id})">X</button>
+            <p class="portfolio-caption">
+                <span>${item.descripcion || 'Sin descripción'}</span>
+                <button class="btn btn-sm btn-outline-danger" onclick="eliminarTrabajo(${item.id})">Eliminar</button>
+            </p>
         `;
         portfolioGrid.appendChild(div);
     }
-
-    // --- Lógica de Formularios ---
 
     document.getElementById('form-add-portfolio').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -198,34 +137,27 @@
         const fileInput = document.getElementById('input-imagen-file');
         const descInput = document.getElementById('input-imagen-desc');
 
-        if (fileInput.files.length === 0) {
+        if (!fileInput.files.length) {
             alert("Por favor selecciona un archivo");
             return;
         }
 
         const file = fileInput.files[0];
-        
-        // 1. Crear FormData para enviar archivos
         const formData = new FormData();
-        formData.append('imagen', file); // 'imagen' debe coincidir con request.files['imagen'] en Flask
+        formData.append('imagen', file);
         formData.append('descripcion', descInput.value);
 
         try {
-            // Nota: Al enviar FormData, NO ponemos 'Content-Type': 'application/json'
-            // El navegador lo configura automáticamente como multipart/form-data
             const response = await fetch('/api/portafolio/add', {
                 method: 'POST',
                 body: formData 
             });
             
             const data = await response.json();
-            
-            if (!response.ok) {
-                throw new Error(data.error || 'Error al añadir');
-            }
-            
-            agregarItemGrid(data.item); // Añadimos el nuevo item al grid
-            document.getElementById('form-add-portfolio').reset(); // Limpiamos form
+            if (!response.ok) throw new Error(data.error || 'Error al añadir');
+
+            agregarItemGrid(data.item);
+            document.getElementById('form-add-portfolio').reset();
 
         } catch (e) {
             console.error(e);
@@ -234,9 +166,7 @@
     });
 
     async function eliminarTrabajo(itemId) {
-        if (!confirm('¿Estás seguro de que quieres eliminar este trabajo?')) {
-            return;
-        }
+        if (!confirm('¿Estás seguro de que quieres eliminar este trabajo?')) return;
         
         try {
             const response = await fetch(`/api/portafolio/delete/${itemId}`, {
@@ -244,12 +174,87 @@
             });
             const data = await response.json();
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Error al eliminar');
+            if (!response.ok) throw new Error(data.error || 'Error al eliminar');
+
+            document.getElementById(`item-${itemId}`).remove();
+            alert(data.mensaje);
+
+        } catch (e) {
+            console.error(e);
+            alert(e.message);
+        }
+    }
+
+    async function loadSolicitudesServicio() {
+        const cont = document.getElementById('solicitudes-list');
+        cont.innerHTML = '<p class="text-muted-soft">Cargando solicitudes...</p>';
+
+        try {
+            const resp = await fetch('/api/solicitudes/proveedor');
+            if (!resp.ok) {
+                const dataError = await resp.json().catch(() => ({}));
+                throw new Error(dataError.error || 'Error al cargar solicitudes');
             }
 
-            document.getElementById(`item-${itemId}`).remove(); // Elimina del DOM
-            alert(data.mensaje);
+            const solicitudes = await resp.json();
+            if (!solicitudes.length) {
+                cont.innerHTML = '<p class="text-muted-soft">No tienes solicitudes por ahora.</p>';
+                return;
+            }
+
+            cont.innerHTML = '';
+            solicitudes.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'solicitud-card mb-2';
+                card.id = `solicitud-${s.id}`;
+
+                card.innerHTML = `
+                    <div class="solicitud-header">
+                        <div>
+                            <strong>Cliente:</strong> ${s.cliente}<br>
+                            <small class="text-muted-soft">${s.creado_en}</small>
+                        </div>
+                        <span class="solicitud-estado ${s.estado}">${s.estado.toUpperCase()}</span>
+                    </div>
+                    <p class="mb-1"><strong>Fecha:</strong> ${s.fecha}</p>
+                    <p class="mb-1"><strong>Horario:</strong> ${s.hora_inicio} - ${s.hora_fin}</p>
+                    <p class="mb-0"><strong>Detalle:</strong> ${s.descripcion || 'Sin descripción adicional.'}</p>
+                    <div class="solicitud-actions mt-2">
+                        <button class="btn btn-sm btn-success" 
+                            onclick="actualizarEstadoSolicitud(${s.id}, 'aceptada')" 
+                            ${s.estado !== 'pendiente' ? 'disabled' : ''}>
+                            Aceptar
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" 
+                            onclick="actualizarEstadoSolicitud(${s.id}, 'rechazada')" 
+                            ${s.estado !== 'pendiente' ? 'disabled' : ''}>
+                            Rechazar
+                        </button>
+                    </div>
+                `;
+                cont.appendChild(card);
+            });
+
+        } catch (e) {
+            console.error(e);
+            cont.innerHTML = '<p class="text-error-soft">Error al cargar las solicitudes.</p>';
+        }
+    }
+
+    async function actualizarEstadoSolicitud(id, nuevoEstado) {
+        if (!confirm(`¿Seguro que quieres marcar esta solicitud como "${nuevoEstado}"?`)) return;
+
+        try {
+            const resp = await fetch(`/api/solicitudes/${id}/estado`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado: nuevoEstado })
+            });
+
+            const data = await resp.json();
+            if (!resp.ok) throw new Error(data.error || 'Error al actualizar estado');
+
+            await loadSolicitudesServicio();
 
         } catch (e) {
             console.error(e);

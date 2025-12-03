@@ -2,153 +2,363 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Registro de Proveedor</title>
-    <style>
-        body { font-family: Arial, sans-serif; display: grid; place-items: center; min-height: 90vh; }
-        form { border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
-        div { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select, textarea { width: 300px; padding: 8px; box-sizing: border-box; }
-        p { text-align: center; }
-    </style>
+    <title>Registro de Proveedor - Zerby</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
-    <!-- Bootstrap 5 (solo CSS, sin JS) -->
+    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- Tu tema visual (lo creamos en el paso 2) -->
+    <!-- Tema global -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-
 </head>
 <body class="auth-page">
 
+<main class="auth-main">
+    <section class="auth-card auth-card-wide">
+        <div class="auth-logo-wrapper">
+            <img src="{{ url_for('static', filename='logo_zerby.png') }}" alt="Zerby Logo" class="auth-logo">
+        </div>
 
-    <form id="form-proveedor">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="{{ url_for('static', filename='logo_zerby.png') }}" alt="Zerby Logo" height="70">
-        </div>
-        <h2>Soy Proveedor (Ofrezco un servicio)</h2>
-        <p style="text-align: center;"><a href="/">&larr; Volver al inicio</a></p>
-        <div>
-            <label>Nombre Completo:</label>
-            <input type="text" name="nombre_completo" required>
-        </div>
-        <div>
-            <label>Email:</label>
-            <input type="email" name="email" required>
-        </div>
-         <div>
-            <label>Contraseña:</label>
-            <input type="password" name="password" required>
-        </div>
-        <div>
-            <label>Teléfono (Obligatorio):</label>
-            <input type="tel" name="telefono" required>
-        </div>
-        <div>
-    <label>Oficio:</label>
-    <select name="oficio" required>
-        <option value="">-- Selecciona tu oficio --</option>
-        
-        <optgroup label="Hogar: Mantenimiento y Reparación">
-            <option value="Gasfitería">Gasfitería</option>
-            <option value="Electricidad">Electricidad</option>
-            <option value="Cerrajería">Cerrajería</option>
-            <option value="Carpintería">Carpintería</option>
-            <option value="Pintura">Pintura</option>
-            <option value="Armado de Muebles">Armado de Muebles</option>
-            <option value="Instalaciones (Lámparas, TV, cortinas)">Instalaciones (Lámparas, TV, cortinas)</option>
-            <option value="Técnico Aire Acondicionado (HVAC)">Técnico Aire Acondicionado (HVAC)</option>
-            <option value="Técnico Calefacción">Técnico Calefacción</option>
-            <option value="Reparación Electrodomésticos">Reparación Electrodomésticos</option>
-            <option value="Vidriería">Vidriería</option>
-        </optgroup>
-        
-        <optgroup label="Hogar: Limpieza y Servicios">
-            <option value="Limpieza Profunda Domicilio">Limpieza Profunda Domicilio</option>
-            <option value="Limpieza Tapicería/Alfombras">Limpieza Tapicería/Alfombras</option>
-            <option value="Jardinería">Jardinería</option>
-            <option value="Control de Plagas">Control de Plagas</option>
-            <option value="Mudanzas y Fletes">Mudanzas y Fletes</option>
-            <option value="Retiro de Escombros/Muebles">Retiro de Escombros/Muebles</option>
-        </optgroup>
-        
-        <optgroup label="Vehículos">
-            <option value="Mecánica Automotriz">Mecánica Automotriz</option>
-            <option value("Lavado de Autos a Domicilio">Lavado de Autos a Domicilio</option>
-        </optgroup>
+        <h2 class="auth-title">Soy proveedor (ofrezco un servicio)</h2>
+        <p class="auth-back-link">
+            <a href="/">&larr; Volver al inicio</a>
+        </p>
 
-        <optgroup label="Cuidado Personal y Bienestar">
-            <option value="Peluquería a Domicilio">Peluquería a Domicilio</option>
-            <option value="Manicura y Pedicura">Manicura y Pedicura</option>
-            <option value="Maquillaje a Domicilio">Maquillaje a Domicilio</option>
-            <option value="Barbería a Domicilio">Barbería a Domicilio</option>
-            <option value="Masoterapia">Masoterapia</option>
-            <option value="Entrenador Personal">Entrenador Personal</option>
-        </optgroup>
+        <form id="form-proveedor" class="auth-form">
+            <div class="mb-3">
+                <label class="form-label">Nombre completo</label>
+                <input type="text" name="nombre_completo" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" name="email" class="form-control" required autocomplete="email">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Contraseña</label>
+                <input type="password" name="password" class="form-control" required autocomplete="new-password">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Teléfono (obligatorio)</label>
+                <input type="tel" name="telefono" class="form-control" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Oficio</label>
+                <select name="oficio" class="form-select" required>
+                    <option value="">-- Selecciona tu oficio --</option>
+                    
+                    <optgroup label="Hogar: Mantenimiento y Reparación">
+                        <option value="Gasfitería">Gasfitería</option>
+                        <option value="Electricidad">Electricidad</option>
+                        <option value="Cerrajería">Cerrajería</option>
+                        <option value="Carpintería">Carpintería</option>
+                        <option value="Pintura">Pintura</option>
+                        <option value="Armado de Muebles">Armado de Muebles</option>
+                        <option value="Instalaciones (Lámparas, TV, cortinas)">Instalaciones (Lámparas, TV, cortinas)</option>
+                        <option value="Técnico Aire Acondicionado (HVAC)">Técnico Aire Acondicionado (HVAC)</option>
+                        <option value="Técnico Calefacción">Técnico Calefacción</option>
+                        <option value="Reparación Electrodomésticos">Reparación Electrodomésticos</option>
+                        <option value="Vidriería">Vidriería</option>
+                    </optgroup>
+                    
+                    <optgroup label="Hogar: Limpieza y Servicios">
+                        <option value="Limpieza Profunda Domicilio">Limpieza Profunda Domicilio</option>
+                        <option value="Limpieza Tapicería/Alfombras">Limpieza Tapicería/Alfombras</option>
+                        <option value="Jardinería">Jardinería</option>
+                        <option value="Control de Plagas">Control de Plagas</option>
+                        <option value="Mudanzas y Fletes">Mudanzas y Fletes</option>
+                        <option value="Retiro de Escombros/Muebles">Retiro de Escombros/Muebles</option>
+                    </optgroup>
+                    
+                    <optgroup label="Vehículos">
+                        <option value="Mecánica Automotriz">Mecánica Automotriz</option>
+                        <option value="Lavado de Autos a Domicilio">Lavado de Autos a Domicilio</option>
+                    </optgroup>
+
+                    <optgroup label="Cuidado Personal y Bienestar">
+                        <option value="Peluquería a Domicilio">Peluquería a Domicilio</option>
+                        <option value="Manicura y Pedicura">Manicura y Pedicura</option>
+                        <option value="Maquillaje a Domicilio">Maquillaje a Domicilio</option>
+                        <option value="Barbería a Domicilio">Barbería a Domicilio</option>
+                        <option value="Masoterapia">Masoterapia</option>
+                        <option value="Entrenador Personal">Entrenador Personal</option>
+                    </optgroup>
+                    
+                    <optgroup label="Cuidado y Asistencia">
+                        <option value="Niñera (Babysitter)">Niñera (Babysitter)</option>
+                        <option value="Cuidado de Adulto Mayor">Cuidado de Adulto Mayor</option>
+                    </optgroup>
+                    
+                    <optgroup label="Mascotas">
+                        <option value="Paseador de Perros">Paseador de Perros</option>
+                        <option value="Peluquería Canina">Peluquería Canina</option>
+                        <option value="Adiestramiento Canino">Adiestramiento Canino</option>
+                    </optgroup>
+                    
+                    <optgroup label="Profesionales y Eventos">
+                        <option value="Profesor Particular">Profesor Particular</option>
+                        <option value="Soporte Técnico (PC/Redes)">Soporte Técnico (PC/Redes)</option>
+                        <option value="Reparación de Celulares">Reparación de Celulares</option>
+                        <option value="Fotografía">Fotografía</option>
+                        <option value="Banquetería / Cóctel">Banquetería / Cóctel</option>
+                        <option value="DJ y Sonido">DJ y Sonido</option>
+                    </optgroup>
+                    
+                    <option value="Otro">Otro (especificar en descripción)</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Describe tu servicio</label>
+                <textarea name="descripcion" class="form-control" rows="3"></textarea>
+            </div> 
         
-        <optgroup label="Cuidado y Asistencia">
-            <option value="Niñera (Babysitter)">Niñera (Babysitter)</option>
-            <option value="Cuidado de Adulto Mayor">Cuidado de Adulto Mayor</option>
-        </optgroup>
-        
-        <optgroup label="Mascotas">
-            <option value="Paseador de Perros">Paseador de Perros</option>
-            <option value="Peluquería Canina">Peluquería Canina</option>
-            <option value="Adiestramiento Canino">Adiestramiento Canino</option>
-        </optgroup>
-        
-        <optgroup label="Profesionales y Eventos">
-            <option value="Profesor Particular">Profesor Particular</option>
-            <option value="Soporte Técnico (PC/Redes)">Soporte Técnico (PC/Redes)</option>
-            <option value="Reparación de Celulares">Reparación de Celulares</option>
-            <option value="Fotografía">Fotografía</option>
-            <option value="Banquetería / Cóctel">Banquetería / Cóctel</option>
-            <option value="DJ y Sonido">DJ y Sonido</option>
-        </optgroup>
-        
-        <option value="Otro">Otro (Especificar en descripción)</option>
-    </select>
-</div>
-         <div>
-            <label>Describe tu servicio:</label>
-            <textarea name="descripcion"></textarea>
-        </div> 
-        
-        <div>
-            <label>(ANTIGUO SISTEMA) Comuna (Ej: La Florida, Providencia):</label>
-            <input type="text" name="comuna">
-        </div>
-        <div>
-            <label for="direccion">Dirección (para geolocalización):</label>
-        <input type="text" id="direccion" name="direccion" placeholder="Ej: Calle 123, Santiago, Chile" required><br>
-        </div>
-        <div>
-            <label>Horario de Atención (Ej: L-V 9-18h):</label>
-            <input type="text" name="horario">
-        </div>
-        <div>
-            <input type="checkbox" name="atiende_urgencias" id="check-urgencias" style="width: auto;">
-            <label for="check-urgencias" style="display: inline; font-weight: normal;">
-                ¿Atiendes urgencias 24/7?
-            </label>
-        </div>
-        <button type="submit">Registrarme como Proveedor</button>
-        <p>¿Ya tienes cuenta? <a href="/login">Inicia sesión</a></p>
-        <p>¿Buscas un servicio? <a href="/registro/usuario">Regístrate como cliente</a></p>
-    </form>
+            <div class="mb-3 position-relative">
+                <label class="form-label" for="direccion">Dirección (para geolocalización)</label>
+                <input 
+                    type="text" 
+                    id="direccion" 
+                    name="direccion" 
+                    class="form-control"
+                    placeholder="Ej: Calle 123, Santiago" 
+                    autocomplete="off"
+                    required
+                >
+                <ul 
+                    id="direccion-sugerencias" 
+                    class="list-group suggestions-list"
+                ></ul>
+            </div>
+
+            <!-- Campos ocultos para lat/lon -->
+            <input type="hidden" id="lat" name="lat">
+            <input type="hidden" id="lon" name="lon">
+
+            <div class="mb-3">
+                <label class="form-label d-flex align-items-center gap-2">
+                    Horario de atención
+                    <button type="button" id="toggle-horario" class="btn btn-sm btn-outline-secondary">
+                        Configurar horario
+                    </button>
+                </label>
+
+                <div id="horario-panel" class="horario-panel">
+                    <!-- Lunes -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-lun" class="form-check-input me-2">
+                        <label for="dia-lun" class="me-2 mb-0">Lunes</label>
+                        <input type="time" id="inicio-lun" class="form-control form-control-sm me-1" value="09:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-lun" class="form-control form-control-sm" value="18:00">
+                    </div>
+
+                    <!-- Martes -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-mar" class="form-check-input me-2">
+                        <label for="dia-mar" class="me-2 mb-0">Martes</label>
+                        <input type="time" id="inicio-mar" class="form-control form-control-sm me-1" value="09:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-mar" class="form-control form-control-sm" value="18:00">
+                    </div>
+
+                    <!-- Miércoles -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-mie" class="form-check-input me-2">
+                        <label for="dia-mie" class="me-2 mb-0">Miércoles</label>
+                        <input type="time" id="inicio-mie" class="form-control form-control-sm me-1" value="09:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-mie" class="form-control form-control-sm" value="18:00">
+                    </div>
+
+                    <!-- Jueves -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-jue" class="form-check-input me-2">
+                        <label for="dia-jue" class="me-2 mb-0">Jueves</label>
+                        <input type="time" id="inicio-jue" class="form-control form-control-sm me-1" value="09:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-jue" class="form-control form-control-sm" value="18:00">
+                    </div>
+
+                    <!-- Viernes -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-vie" class="form-check-input me-2">
+                        <label for="dia-vie" class="me-2 mb-0">Viernes</label>
+                        <input type="time" id="inicio-vie" class="form-control form-control-sm me-1" value="09:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-vie" class="form-control form-control-sm" value="18:00">
+                    </div>
+
+                    <!-- Sábado -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-sab" class="form-check-input me-2">
+                        <label for="dia-sab" class="me-2 mb-0">Sábado</label>
+                        <input type="time" id="inicio-sab" class="form-control form-control-sm me-1" value="10:00">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-sab" class="form-control form-control-sm" value="14:00">
+                    </div>
+
+                    <!-- Domingo -->
+                    <div class="horario-row">
+                        <input type="checkbox" id="dia-dom" class="form-check-input me-2">
+                        <label for="dia-dom" class="me-2 mb-0">Domingo</label>
+                        <input type="time" id="inicio-dom" class="form-control form-control-sm me-1">
+                        <span class="mx-1">a</span>
+                        <input type="time" id="fin-dom" class="form-control form-control-sm">
+                    </div>
+
+                    <small class="horario-help text-muted-soft">
+                        Marca los días que trabajas y tus horarios. Esto se mostrará en tu perfil.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Campo oculto donde guardaremos el texto final -->
+            <input type="hidden" name="horario" id="horario">
+
+            <div class="mb-3">
+                <div class="form-check d-flex align-items-center gap-2">
+                    <input type="checkbox" name="atiende_urgencias" id="check-urgencias" class="form-check-input">
+                    <label for="check-urgencias" class="form-check-label">
+                        ¿Atiendes urgencias?
+                        <span 
+                            class="info-icon" 
+                            data-tooltip="Atender urgencias significa que tienes la posibilidad de responder y atender inmediatamente una emergencia o en un periodo cercano de tiempo desde que el cliente te contacta por el servicio."
+                            aria-label="Información sobre urgencias"
+                        >
+                            i
+                        </span>
+                    </label>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 auth-submit-btn">
+                Registrarme como proveedor
+            </button>
+
+            <p class="auth-footer-text">
+                ¿Ya tienes cuenta? <a href="/login">Inicia sesión</a><br>
+                ¿Buscas un servicio? <a href="/registro/usuario">Regístrate como cliente</a>
+            </p>
+        </form>
+    </section>
+</main>
 
 <script>
+    const direccionInput = document.getElementById('direccion');
+    const sugerenciasList = document.getElementById('direccion-sugerencias');
+    const latInput = document.getElementById('lat');
+    const lonInput = document.getElementById('lon');
+
+    let debounceTimeout = null;
+    let currentController = null;
+
+    direccionInput.addEventListener('input', () => {
+        const query = direccionInput.value.trim();
+        clearTimeout(debounceTimeout);
+
+        if (!query || query.length < 4) {
+            sugerenciasList.innerHTML = '';
+            latInput.value = '';
+            lonInput.value = '';
+            return;
+        }
+
+        debounceTimeout = setTimeout(() => {
+            if (currentController) {
+                currentController.abort();
+            }
+            currentController = new AbortController();
+
+            fetch(`/api/geocode/search?q=${encodeURIComponent(query)}`, {
+                signal: currentController.signal
+            })
+                .then(res => {
+                    if (!res.ok) throw new Error('Respuesta no OK');
+                    return res.json();
+                })
+                .then(data => {
+                    sugerenciasList.innerHTML = '';
+
+                    data.forEach(item => {
+                        const li = document.createElement('li');
+                        li.textContent = item.display_name;
+                        li.classList.add('list-group-item', 'suggestion-item');
+
+                        li.addEventListener('click', () => {
+                            direccionInput.value = item.display_name;
+                            latInput.value = item.lat;
+                            lonInput.value = item.lon;
+                            sugerenciasList.innerHTML = '';
+                        });
+
+                        sugerenciasList.appendChild(li);
+                    });
+                })
+                .catch(err => {
+                    if (err.name !== 'AbortError') {
+                        console.error('Error fetch geocode:', err);
+                    }
+                    sugerenciasList.innerHTML = '';
+                });
+        }, 600);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!sugerenciasList.contains(e.target) && e.target !== direccionInput) {
+            sugerenciasList.innerHTML = '';
+        }
+    });
+
+    const toggleHorarioBtn = document.getElementById('toggle-horario');
+    const horarioPanel = document.getElementById('horario-panel');
+
+    toggleHorarioBtn.addEventListener('click', () => {
+        horarioPanel.classList.toggle('horario-panel-open');
+    });
+
+    function buildHorarioString() {
+        const dias = [
+            { id: 'lun', label: 'Lunes' },
+            { id: 'mar', label: 'Martes' },
+            { id: 'mie', label: 'Miércoles' },
+            { id: 'jue', label: 'Jueves' },
+            { id: 'vie', label: 'Viernes' },
+            { id: 'sab', label: 'Sábado' },
+            { id: 'dom', label: 'Domingo' }
+        ];
+
+        const partes = [];
+
+        dias.forEach(d => {
+            const chk = document.getElementById(`dia-${d.id}`);
+            const inicio = document.getElementById(`inicio-${d.id}`).value;
+            const fin = document.getElementById(`fin-${d.id}`).value;
+
+            if (chk && chk.checked && inicio && fin) {
+                partes.push(`${d.label} ${inicio}-${fin}`);
+            }
+        });
+
+        return partes.join('; ');
+    }
+
     document.getElementById('form-proveedor').addEventListener('submit', async function(e) {
         e.preventDefault(); 
         
+        const horarioStr = buildHorarioString();
+        document.getElementById('horario').value = horarioStr;
+
         const formData = new FormData(this);
         const datos = Object.fromEntries(formData.entries());
+
         datos.atiende_urgencias = document.getElementById('check-urgencias').checked;
+
         const response = await fetch('/registrar/proveedor', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -158,10 +368,10 @@
         const resultado = await response.json();
         
         if (response.ok) {
-            alert(resultado.mensaje);
+            alert(resultado.mensaje || 'Proveedor registrado con éxito.');
             window.location.href = '/dashboard';
         } else {
-            alert(resultado.mensaje);
+            alert(resultado.mensaje || 'Error al registrar proveedor');
         }
     });
 </script>
